@@ -2,7 +2,7 @@
 <div class="container-fluid bg-white mt-5">
     <div class="row">
         <div class="col-lg-4 p-4">
-            <h3 class="fw-bold fs-3 mb-2 text-danger">BSU LAMS</h3>
+            <h4 class="fw-bold fs-4 mb-2 text-danger">BSU LAMS</h4>
             <p>
                 Laboratory Asset Management System for the Hot Kitchen, Cold Kitchen, Food & Beverage Services, and Laundry facilities of Batangas State University.
             </p>
