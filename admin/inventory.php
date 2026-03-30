@@ -119,8 +119,6 @@ $categories = mysqli_query($con, "SELECT * FROM lab_categories");
                     while($row = mysqli_fetch_assoc($res)):
                         $img = $row['image_path'] ? "../uploads/lab_items/{$row['image_path']}" : "../assets/images/placeholder.png";
                         $avail_badge = $row['available_quantity'] > 0 ? 'bg-success' : 'bg-danger';
-                        $min_t = isset($row['min_threshold']) ? $row['min_threshold'] : 0;
-                        if($row['available_quantity'] <= $min_t && $row['available_quantity'] > 0) $avail_badge = 'bg-warning text-dark';
                 ?>
                 <tr>
                     <td><img src="<?= $img ?>" class="item-thumbnail object-fit-cover bg-white p-1" width="55" height="55" onerror="this.src='../assets/images/placeholder.png'"></td>
