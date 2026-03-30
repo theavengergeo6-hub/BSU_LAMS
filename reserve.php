@@ -227,7 +227,7 @@ function loadItems(catId) {
                 let bgClass = item.available_quantity <= 0 ? 'bg-light opacity-75' : '';
                 
                 let cardHTML = `
-                <div class="col-md-6 mb-4">
+                <div class="col-md-6 mb-4 fade-in-up">
                     <div class="card h-100 shadow-sm border-0 ${bgClass} custom-card">
                         <img src="${img}" class="card-img-top" onerror="this.src='assets/images/placeholder.png'" style="height:150px;object-fit:cover;">
                         <div class="card-body p-3">
