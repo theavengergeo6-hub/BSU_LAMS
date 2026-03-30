@@ -18,7 +18,7 @@ require('inc/header.php');
 </div>
 
 <!-- Information Section -->
-<div class="container mb-5 p-5 bg-white rounded shadow-sm custom-card border-0 fade-in-up stagger-1">
+<div class="container mb-5 p-lg-5 p-4 bg-white rounded shadow-sm custom-card border-0 fade-in-up stagger-1">
     <div class="row align-items-center g-5">
         <div class="col-md-6 mb-4 mb-md-0">
             <div class="d-flex align-items-center mb-4 pb-2 border-bottom">

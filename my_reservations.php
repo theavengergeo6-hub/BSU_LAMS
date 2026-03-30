@@ -14,7 +14,7 @@ if($status_filter) {
 }
 ?>
 
-<div class="container mt-5 mb-5 p-5 bg-white rounded shadow-sm custom-card">
+<div class="container mt-5 mb-5 p-lg-5 p-4 bg-white rounded shadow-sm custom-card">
     <h3 class="fw-bold mb-4 text-danger border-bottom pb-2">My Reservations</h3>
     
     <form class="row g-3 mb-5 fade-in-up" method="GET">

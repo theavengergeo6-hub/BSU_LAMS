@@ -70,14 +70,17 @@ if(!in_array($status_tab, $statuses)) $status_tab = 'Pending';
                     </td>
                     <td class="text-center">
                         <?php if($status_tab == 'Pending'): ?>
-                            <button class="btn btn-sm btn-success fw-bold shadow-sm mb-1 w-100" onclick="openApprovalModal(<?= $id ?>, '<?= $row['reservation_no'] ?>')"><i class="bi bi-check-lg me-1"></i>Approve</button>
+                            <button class="btn btn-sm btn-success fw-bold shadow-sm mb-1 w-100" onclick="viewReservation(<?= $id ?>, '<?= $row['reservation_no'] ?>', true)"><i class="bi bi-check-lg me-1"></i>Review</button>
                             <button class="btn btn-sm btn-outline-danger fw-bold shadow-sm w-100" onclick="updateStatus(<?= $id ?>, 'Denied')"><i class="bi bi-x-lg me-1"></i>Deny</button>
                         <?php elseif($status_tab == 'Approved'): ?>
+                            <button class="btn btn-sm btn-dark fw-bold shadow-sm mb-1 w-100" onclick="viewReservation(<?= $id ?>, '<?= $row['reservation_no'] ?>', false)"><i class="bi bi-eye me-1"></i>View Details</button>
                             <button class="btn btn-sm btn-primary fw-bold shadow-sm mb-1 w-100" onclick="updateStatus(<?= $id ?>, 'Ongoing')"><i class="bi bi-play-fill me-1"></i>Ongoing</button>
                             <button class="btn btn-sm btn-outline-danger fw-bold shadow-sm w-100" onclick="updateStatus(<?= $id ?>, 'Denied')"><i class="bi bi-x-lg me-1"></i>Deny</button>
                         <?php elseif($status_tab == 'Ongoing'): ?>
+                            <button class="btn btn-sm btn-dark fw-bold shadow-sm mb-1 w-100" onclick="viewReservation(<?= $id ?>, '<?= $row['reservation_no'] ?>', false)"><i class="bi bi-eye me-1"></i>View Details</button>
                             <button class="btn btn-sm btn-success fw-bold shadow-sm w-100" onclick="updateStatus(<?= $id ?>, 'Completed')"><i class="bi bi-check-circle-fill me-1"></i>Complete</button>
                         <?php else: ?>
+                            <button class="btn btn-sm btn-dark fw-bold shadow-sm mb-1 w-100" onclick="viewReservation(<?= $id ?>, '<?= $row['reservation_no'] ?>', false)"><i class="bi bi-eye me-1"></i>View Details</button>
                             <button class="btn btn-sm btn-secondary shadow-sm w-100 disabled text-white"><i class="bi bi-info-circle me-1"></i>Closed</button>
                         <?php endif; ?>
                     </td>
@@ -98,7 +101,7 @@ if(!in_array($status_tab, $statuses)) $status_tab = 'Pending';
     <div class="modal-dialog modal-lg">
         <div class="modal-content border-0">
             <div class="modal-header bg-danger text-white border-0">
-                <h5 class="modal-title fw-bold"><i class="bi bi-card-checklist me-2"></i>Approve Reservation <span id="approveResNo"></span></h5>
+                <h5 class="modal-title fw-bold"><span id="modalTitleText"><i class="bi bi-card-checklist me-2"></i>Approve Reservation </span><span id="approveResNo"></span></h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4" id="approvalModalBody">
@@ -109,10 +112,14 @@ if(!in_array($status_tab, $statuses)) $status_tab = 'Pending';
 </div>
 
 <script>
-function openApprovalModal(id, resNo) {
+function viewReservation(id, resNo, isPending) {
     document.getElementById('approveResNo').textContent = resNo;
+    document.getElementById('modalTitleText').innerHTML = isPending ? '<i class="bi bi-card-checklist me-2"></i>Approve Reservation ' : '<i class="bi bi-card-text me-2"></i>Reservation Details ';
+    
     let modal = new bootstrap.Modal(document.getElementById('approvalModal'));
     modal.show();
+    
+    document.getElementById('approvalModalBody').innerHTML = '<div class="text-center py-5"><div class="spinner-border text-danger"></div></div>';
     
     fetch(`../ajax/get_approval_items.php?id=${id}`) // New ajax strictly for form
     .then(res => res.text())

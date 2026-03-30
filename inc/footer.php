@@ -24,6 +24,6 @@
 
 <h6 class="text-center bg-danger text-white m-0 p-3">Designed and Developed for BSU - All Rights Reserved</h6>
 
-<script src="<?= BASE_URL ?>/assets/js/main.js"></script>
+<script src="<?= BASE_URL ?>/assets/js/main.js?v=<?= time() ?>"></script>
 </body>
 </html>

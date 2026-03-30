@@ -1,6 +1,6 @@
-        </div> <!-- End Col 10 -->
-    </div> <!-- End Row -->
-</div> <!-- End Container Fluid -->
+        </div> <!-- End Content Area -->
+    </div> <!-- End Main Content -->
+</div> <!-- End Admin Wrapper -->
 
 <!-- Required JS Scripts for Admin -->
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>

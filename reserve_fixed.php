@@ -924,7 +924,7 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
 
 <script>
     // ── State ─────────────────────────────────────────────
-    let labCart = {};   // { itemId: { name, qty, max, catId } }
+    let cart = {};   // { itemId: { name, qty, max, catId } }
     let loadedCats = {};   // { catId: true }
     let catData = {};   // { catId: [...items] }  — raw cache for search
     let catNames = {};   // { catId: 'Display Name' }
@@ -1210,7 +1210,7 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
 
     // ── Cart ──────────────────────────────────────────────
     function toggleCart(itemId, itemName, maxQty, catId) {
-        if (labCart[itemId]) { removeFromCart(itemId, event); }
+        if (labCart[itemId]) { removeFromCart(itemId); }
         else { addToCart(itemId, itemName, maxQty, catId); }
     }
 
@@ -1224,21 +1224,16 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
         renderCart();
     }
 
-    function removeFromCart(itemId, e = null) {
-        if(e) { e.preventDefault(); e.stopPropagation(); }
+    function removeFromCart(itemId) {
         delete labCart[itemId];
 
         const btn = document.getElementById('addbtn-' + itemId);
         if (btn) { btn.classList.remove('added'); btn.innerHTML = '<i class="bi bi-cart-plus"></i> Add to Cart'; }
-        
-        const vbtn = document.getElementById('vaddbtn-' + itemId);
-        if (vbtn) { vbtn.classList.remove('added'); vbtn.innerHTML = 'Add'; }
-
         renderCart();
     }
 
     function renderCart() {
-        const keys = Object.keys(labCart);
+        const keys = Object.keys(cart);
         const empty = document.getElementById('cart-empty');
         const list = document.getElementById('cart-list');
         const count = document.getElementById('cart-count-row');
@@ -1247,11 +1242,6 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
             empty.style.display = 'block';
             list.innerHTML = '';
             count.style.display = 'none';
-            document.getElementById('mobile-cart-count').textContent = '0';
-            document.getElementById('drawer-list').innerHTML = '';
-            document.getElementById('mobile-submit-bar').classList.remove('active');
-            document.getElementById('mobile-cart-drawer').classList.remove('open');
-            document.getElementById('cart-drawer-overlay').classList.remove('open');
             return;
         }
 
@@ -1275,7 +1265,7 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
                 <div class="cart-item-name">${labCart[id].name}</div>
                 <div class="cart-item-qty">Qty: ${labCart[id].qty}</div>
             </div>
-            <button type="button" class="cart-item-remove" onclick="removeFromCart(${id}, event)" title="Remove">
+            <button class="cart-item-remove" onclick="removeFromCart(${id})" title="Remove">
                 <i class="bi bi-x-lg"></i>
             </button>
         </div>`).join('');
@@ -1324,7 +1314,7 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
             }
         }
 
-        if (!Object.keys(labCart).length) {
+        if (!Object.keys(cart).length) {
             showAlert('Please add at least one item to your reservation.', 'error');
             return;
         }
@@ -1339,7 +1329,7 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
             batch: document.getElementById('req_batch').value.trim(),
             date: document.getElementById('req_date').value,
             time: document.getElementById('req_time').value,
-            items: Object.entries(labCart).map(([id, v]) => ({ id, name: v.name, qty: v.qty })),
+            items: Object.entries(cart).map(([id, v]) => ({ id, name: v.name, qty: v.qty })),
         };
 
         fetch('ajax/submit_reservation.php', {
@@ -1351,7 +1341,7 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
             .then(res => {
                 if (res.success) {
                     showAlert('Reservation submitted! You will be notified once approved.', 'success');
-                    labCart = {};
+                    cart = {};
                     renderCart();
                     document.querySelectorAll('.btn-add.added').forEach(b => {
                         b.classList.remove('added');

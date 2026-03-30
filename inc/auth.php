@@ -1,10 +1,12 @@
 <?php
 function adminLogin()
 {
-    session_start();
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
     if(!(isset($_SESSION['adminLogin']) && $_SESSION['adminLogin'] == true)){
         echo"<script>
-            window.location.href='index.php';
+            window.location.href='login.php';
         </script>";
         exit;
     }
