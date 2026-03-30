@@ -1,0 +1,214 @@
+:root {
+    --bsu-red: #b71c1c;
+    --bsu-red-hover: #d32f2f;
+    --light-bg: #f8f9fa;
+    --dark-text: #212529;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--light-bg);
+    color: var(--dark-text);
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+}
+
+/* Custom Buttons */
+.btn-primary, .btn-danger {
+    background: linear-gradient(135deg, var(--bsu-red), #900000);
+    border: none;
+    border-radius: 50px;
+    padding: 10px 24px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover, .btn-danger:hover {
+    background: linear-gradient(135deg, var(--bsu-red-hover), var(--bsu-red));
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(183, 28, 28, 0.3);
+}
+
+.btn-secondary {
+    border-radius: 50px;
+    padding: 10px 24px;
+    font-weight: 500;
+    background-color: #6c757d;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(108, 117, 125, 0.3);
+}
+
+/* Cards */
+.card, .custom-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    background: #fff;
+    overflow: hidden;
+}
+
+.card:hover, .custom-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.card-img-top {
+    height: 180px;
+    object-fit: cover;
+    border-bottom: 3px solid var(--bsu-red);
+}
+
+/* Form Inputs */
+.form-control, .form-select {
+    border-radius: 8px;
+    border: 1px solid #ced4da;
+    padding: 12px 15px;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--bsu-red);
+    box-shadow: 0 0 0 0.25rem rgba(183, 28, 28, 0.25);
+}
+
+/* Progress Steps UI */
+.step-progress {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+.step-progress::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background-color: #e9ecef;
+    z-index: 1;
+    transform: translateY(-50%);
+}
+
+.step-item {
+    position: relative;
+    z-index: 2;
+    background: #fff;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 600;
+    color: #6c757d;
+    border: 3px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.step-item.active {
+    border-color: var(--bsu-red);
+    background-color: var(--bsu-red);
+    color: #fff;
+    box-shadow: 0 0 0 5px rgba(183, 28, 28, 0.2);
+}
+
+.step-item.completed {
+    border-color: var(--bsu-red);
+    background-color: #fff;
+    color: var(--bsu-red);
+}
+
+/* Modals */
+.modal-content {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+}
+
+.modal-backdrop.show {
+    opacity: 0.6;
+    backdrop-filter: blur(5px);
+}
+
+/* Tables */
+.table {
+    vertical-align: middle;
+}
+
+.table th {
+    background-color: #f8f9fa;
+    color: #495057;
+    font-weight: 600;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(183, 28, 28, 0.05);
+    transition: background-color 0.2s ease;
+}
+
+/* Alert/Toasts */
+.custom-alert {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1050;
+    min-width: 300px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    border: none;
+}
+
+/* Loading Spinner */
+.loader-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.spinner-border.text-danger {
+    color: var(--bsu-red) !important;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in-up {
+    animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* Responsive Overrides */
+@media (max-width: 768px) {
+    .btn-primary, .btn-danger, .btn-secondary {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    
+    .step-item {
+        width: 30px;
+        height: 30px;
+        font-size: 14px;
+    }
+}
