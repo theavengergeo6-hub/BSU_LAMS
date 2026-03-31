@@ -2,6 +2,12 @@
 require_once('../config.php');
 require_once('../inc/auth.php');
 adminLogin();
+
+// Prevent browser caching to ensure user cannot go back after logout
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Cache-Control: post-check=0, pre-check=0", false);
+header("Pragma: no-cache");
+
 $current_page = basename($_SERVER['PHP_SELF']);
 ?>
 <!DOCTYPE html>
@@ -211,7 +217,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 Settings
             </a>
             <div style="height: 1px; background: #eee; margin: 1rem 0;"></div>
-            <a href="<?= BASE_URL ?>/logout.php" style="color: #dc3545;">
+            <a href="logout.php" style="color: #dc3545;">
                 <i class="bi bi-box-arrow-right" style="color: #dc3545;"></i>
                 Logout
             </a>
@@ -232,7 +238,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                     <div class="user-name"><?= $_SESSION['adminUsername'] ?? 'Admin' ?></div>
                     <div class="user-role">Super Administrator</div>
                 </div>
-                <a href="<?= BASE_URL ?>/logout.php" class="btn-logout">
+                <a href="logout.php" class="btn-logout">
                     <i class="bi bi-box-arrow-right"></i>
                     <span>LOGOUT</span>
                 </a>

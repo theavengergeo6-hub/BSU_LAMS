@@ -369,10 +369,11 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
 
     .item-card img {
         width: 100%;
-        height: 110px;
-        object-fit: cover;
+        height: 140px;
+        object-fit: contain;
         display: block;
-        background: #f0f0ee;
+        background: #f7f6f4;
+        padding: 8px;
     }
 
     .item-card-body {
@@ -617,110 +618,250 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
     /* ── Sticky Mobile Submit ── */
     .mobile-submit-bar {
         position: fixed;
-        bottom: 0; left: 0; width: 100%;
+        bottom: 0;
+        left: 0;
+        width: 100%;
         background: var(--white);
-        box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
+        box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.1);
         padding: 14px 20px;
-        display: none; /* JS toggles */
+        display: none;
+        /* JS toggles */
         z-index: 999;
         border-top: 1px solid var(--border);
         animation: slideUp .3s ease;
     }
-    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-    
+
+    @keyframes slideUp {
+        from {
+            transform: translateY(100%);
+        }
+
+        to {
+            transform: translateY(0);
+        }
+    }
+
     /* ── Mobile Cart Drawer ── */
     #mobile-cart-drawer {
         position: fixed;
-        bottom: -100%; left: 0; width: 100%; height: 75vh;
+        bottom: -100%;
+        left: 0;
+        width: 100%;
+        height: 75vh;
         background: var(--white);
         z-index: 1001;
         border-radius: 24px 24px 0 0;
-        box-shadow: 0 -10px 40px rgba(0,0,0,0.15);
+        box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.15);
         transition: bottom 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        display: flex; flex-direction: column; padding: 20px;
+        display: flex;
+        flex-direction: column;
+        padding: 20px;
     }
-    #mobile-cart-drawer.open { bottom: 0; }
+
+    #mobile-cart-drawer.open {
+        bottom: 0;
+    }
+
     .drawer-overlay {
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(2px);
-        display: none; z-index: 1000;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(2px);
+        display: none;
+        z-index: 1000;
     }
-    .drawer-overlay.open { display: block; }
+
+    .drawer-overlay.open {
+        display: block;
+    }
+
     .drawer-handle {
-        width: 40px; height: 4px; background: #e2e8f0;
-        border-radius: 10px; margin: 0 auto 15px;
+        width: 40px;
+        height: 4px;
+        background: #e2e8f0;
+        border-radius: 10px;
+        margin: 0 auto 15px;
     }
-    .drawer-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 20px; color: var(--dark); border-bottom: 2px solid var(--border); padding-bottom: 10px; }
-    #drawer-list { flex: 1; overflow-y: auto; }
-    
+
+    .drawer-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 20px;
+        color: var(--dark);
+        border-bottom: 2px solid var(--border);
+        padding-bottom: 10px;
+    }
+
+    #drawer-list {
+        flex: 1;
+        overflow-y: auto;
+    }
+
     @media (max-width: 1024px) {
-        .reserve-layout { grid-template-columns: 1fr; padding: 0 16px; }
-        .sidebar { order: 2; }
+        .reserve-layout {
+            grid-template-columns: 1fr;
+            padding: 0 16px;
+        }
+
+        .sidebar {
+            order: 2;
+        }
     }
 
     @media (max-width: 600px) {
-        .reserve-header { padding: 32px 16px 20px; }
-        .reserve-header h1 { font-size: 1.8rem; }
-        .r-card-body { padding: 16px; }
-        .form-row { grid-template-columns: 1fr; }
-        .items-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-        .item-card img { height: 90px; }
-        .btn-submit { padding: 12px; font-size: 0.95rem; }
-        .variant-modal-content { padding: 24px 20px; width: 92%; }
-        
-        .mobile-submit-bar.active { display: flex; align-items: center; justify-content: space-between; }
+        .reserve-header {
+            padding: 32px 16px 20px;
+        }
+
+        .reserve-header h1 {
+            font-size: 1.8rem;
+        }
+
+        .r-card-body {
+            padding: 16px;
+        }
+
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+
+        .items-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .item-card img {
+            height: 110px;
+            padding: 6px;
+        }
+
+        .btn-submit {
+            padding: 12px;
+            font-size: 0.95rem;
+        }
+
+        .variant-modal-content {
+            padding: 24px 20px;
+            width: 92%;
+        }
+
+        .mobile-submit-bar.active {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
     }
 
     @media (max-width: 400px) {
-        .items-grid { grid-template-columns: 1fr; }
+        .items-grid {
+            grid-template-columns: 1fr;
+        }
     }
 
     /* ── Multi-size Modal ── */
     .variant-modal {
         position: fixed;
-        top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.5);
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
         display: none;
-        align-items: center; justify-content: center;
+        align-items: center;
+        justify-content: center;
         z-index: 10000;
         backdrop-filter: blur(4px);
     }
+
     .variant-modal-content {
         background: var(--white);
         border-radius: var(--radius);
         width: 100%;
         max-width: 500px;
         padding: 32px;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
         position: relative;
         animation: modalIn .3s ease;
         max-height: 85vh;
         overflow-y: auto;
     }
+
     @keyframes modalIn {
-        from { opacity: 0; transform: translateY(20px) scale(0.95); }
-        to { opacity: 1; transform: translateY(0) scale(1); }
+        from {
+            opacity: 0;
+            transform: translateY(20px) scale(0.95);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
     }
+
     .variant-modal-close {
         position: absolute;
-        top: 20px; right: 20px;
-        background: none; border: none; font-size: 1.5rem;
-        cursor: pointer; color: var(--muted);
+        top: 20px;
+        right: 20px;
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: var(--muted);
     }
+
     .variant-list {
-        display: flex; flex-direction: column; gap: 12px; margin-top: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 20px;
     }
+
     .variant-item {
-        display: flex; align-items: center; justify-content: space-between;
-        padding: 14px; border: 1.5px solid var(--border);
-        border-radius: 10px; transition: all .15s;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px;
+        border: 1.5px solid var(--border);
+        border-radius: 10px;
+        transition: all .15s;
     }
-    .variant-item:hover { border-color: var(--red); background: var(--red-light); }
-    .variant-info { flex: 1; }
-    .variant-title { font-weight: 600; font-size: 0.9rem; }
-    .variant-stock { font-size: 0.78rem; color: var(--muted); }
-    .variant-actions { display: flex; align-items: center; gap: 10px; }
-    .variant-qty { width: 45px; padding: 4px; border: 1px solid var(--border); border-radius: 5px; text-align: center; font-size: 0.82rem; }
+
+    .variant-item:hover {
+        border-color: var(--red);
+        background: var(--red-light);
+    }
+
+    .variant-info {
+        flex: 1;
+    }
+
+    .variant-title {
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .variant-stock {
+        font-size: 0.78rem;
+        color: var(--muted);
+    }
+
+    .variant-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .variant-qty {
+        width: 45px;
+        padding: 4px;
+        border: 1px solid var(--border);
+        border-radius: 5px;
+        text-align: center;
+        font-size: 0.82rem;
+    }
 </style>
 
 
@@ -895,7 +1036,8 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
     <div style="font-size:0.85rem; font-weight:600; color:var(--dark); cursor:pointer;" onclick="toggleCartDrawer()">
         <span id="mobile-cart-count">0</span> items selected <i class="bi bi-chevron-up ms-1"></i>
     </div>
-    <button class="btn-submit" onclick="submitReservation()" style="width:auto; padding:8px 16px; font-size:0.85rem; margin:0;">
+    <button class="btn-submit" onclick="submitReservation()"
+        style="width:auto; padding:8px 16px; font-size:0.85rem; margin:0;">
         Submit Now <i class="bi bi-chevron-right ms-1"></i>
     </button>
 </div>
@@ -915,8 +1057,10 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
 <div id="variant-modal" class="variant-modal">
     <div class="variant-modal-content">
         <button class="variant-modal-close" onclick="closeVariantModal()">&times;</button>
-        <h2 id="modal-base-name" style="font-family:'DM Serif Display',serif; font-size:1.5rem; margin-bottom:4px;">Select Size</h2>
-        <p style="font-size:0.85rem; color:var(--muted); margin-bottom:0;">Choose the specific size/type you need for this tool.</p>
+        <h2 id="modal-base-name" style="font-family:'DM Serif Display',serif; font-size:1.5rem; margin-bottom:4px;">
+            Select Size</h2>
+        <p style="font-size:0.85rem; color:var(--muted); margin-bottom:0;">Choose the specific size/type you need for
+            this tool.</p>
         <div id="variant-list" class="variant-list"></div>
     </div>
 </div>
@@ -1069,7 +1213,7 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
             } else if (name.match(/^\d+oz\s+/)) {
                 base = name.replace(/^\d+oz\s+/, '').trim();
             }
-            
+
             if (!groups[base]) groups[base] = [];
             groups[base].push(item);
         });
@@ -1081,7 +1225,7 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
                 const img = item.image_path ? `uploads/lab_items/${item.image_path}` : 'assets/images/placeholder.png';
                 const totalAvail = items.reduce((sum, i) => sum + parseInt(i.available_quantity), 0);
                 const allOos = totalAvail <= 0;
-                
+
                 return `
                 <div class="item-card${allOos ? ' out-of-stock' : ''}">
                     <img src="${img}" alt="${base}" onerror="this.src='assets/images/placeholder.png'">
@@ -1135,23 +1279,23 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
         const modal = document.getElementById('variant-modal');
         const title = document.getElementById('modal-base-name');
         const list = document.getElementById('variant-list');
-        
+
         title.textContent = baseName;
         list.innerHTML = '';
-        
+
         // Find variants in catData by matching the base name (post-stripping)
         const variants = (catData[catId] || []).filter(item => {
             let name = item.item_name.split(' (')[0].trim();
             let base = name.replace(/^\d+['"]\s+/, '').replace(/^\d+oz\s+/, '').trim();
             return base === baseName;
         });
-        
+
         list.innerHTML = variants.map(v => {
             const avail = parseInt(v.available_quantity);
             const inCart = labCart[v.id] != null;
             const oos = avail <= 0;
             const safe = v.item_name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-            
+
             // For the title in the modal, show the part that makes it unique (the size/spec)
             let uniquePart = v.item_name;
             if (v.item_name.includes('(')) {
@@ -1161,7 +1305,7 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
             } else if (v.item_name.match(/^\d+oz\s+/)) {
                 uniquePart = v.item_name.match(/^\d+oz/)[0];
             }
-            
+
             return `
             <div class="variant-item">
                 <div class="variant-info">
@@ -1179,7 +1323,7 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
                 </div>
             </div>`;
         }).join('');
-        
+
         modal.style.display = 'flex';
     }
 
@@ -1190,20 +1334,20 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
     function toggleVariantInCart(id, name, max, catId) {
         const qInput = document.getElementById('vqty-' + id);
         const qty = qInput ? parseInt(qInput.value) : 1;
-        
+
         if (labCart[id]) {
             delete labCart[id];
             const btn = document.getElementById('vaddbtn-' + id);
-            if(btn) { btn.classList.remove('added'); btn.innerHTML = 'Add'; }
+            if (btn) { btn.classList.remove('added'); btn.innerHTML = 'Add'; }
         } else {
             labCart[id] = { name, qty: Math.min(qty, max), max, catId };
             const btn = document.getElementById('vaddbtn-' + id);
-            if(btn) { btn.classList.add('added'); btn.innerHTML = 'Added'; }
+            if (btn) { btn.classList.add('added'); btn.innerHTML = 'Added'; }
         }
         renderCart();
     }
 
-    window.onclick = function(event) {
+    window.onclick = function (event) {
         const modal = document.getElementById('variant-modal');
         if (event.target == modal) { modal.style.display = 'none'; }
     }
@@ -1225,12 +1369,12 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
     }
 
     function removeFromCart(itemId, e = null) {
-        if(e) { e.preventDefault(); e.stopPropagation(); }
+        if (e) { e.preventDefault(); e.stopPropagation(); }
         delete labCart[itemId];
 
         const btn = document.getElementById('addbtn-' + itemId);
         if (btn) { btn.classList.remove('added'); btn.innerHTML = '<i class="bi bi-cart-plus"></i> Add to Cart'; }
-        
+
         const vbtn = document.getElementById('vaddbtn-' + itemId);
         if (vbtn) { vbtn.classList.remove('added'); vbtn.innerHTML = 'Add'; }
 
@@ -1262,7 +1406,7 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
 
         // Toggle mobile bar
         const mBar = document.getElementById('mobile-submit-bar');
-        if(keys.length > 0) mBar.classList.add('active');
+        if (keys.length > 0) mBar.classList.add('active');
         else {
             mBar.classList.remove('active');
             document.getElementById('mobile-cart-drawer').classList.remove('open');
@@ -1279,7 +1423,7 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
                 <i class="bi bi-x-lg"></i>
             </button>
         </div>`).join('');
-        
+
         list.innerHTML = itemsHtml;
         document.getElementById('drawer-list').innerHTML = itemsHtml;
     }

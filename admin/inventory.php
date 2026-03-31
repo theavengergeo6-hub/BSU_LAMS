@@ -705,10 +705,10 @@ $categories = mysqli_query($con, 'SELECT * FROM lab_categories');
 
     <!-- Filter bar -->
     <div class="filter-bar">
-        <form style="display:contents;" method="GET">
+        <form id="filterForm" style="display:contents;" method="GET" onsubmit="event.preventDefault(); fetchResults();">
             <div class="filter-field">
                 <label class="filter-label">Category</label>
-                <select name="category_id" class="filter-select">
+                <select name="category_id" class="filter-select" onchange="autoFilter()">
                     <option value="">All Categories</option>
                     <?php while ($c = mysqli_fetch_assoc($categories)): ?>
                         <option value="<?= $c['id'] ?>" <?= $cat_filter == $c['id'] ? 'selected' : '' ?>>
@@ -720,7 +720,7 @@ $categories = mysqli_query($con, 'SELECT * FROM lab_categories');
             <div class="filter-field" style="flex:2;">
                 <label class="filter-label">Search</label>
                 <input type="text" name="search" class="filter-input" placeholder="Search item name…"
-                    value="<?= htmlspecialchars($search) ?>">
+                    value="<?= htmlspecialchars($search) ?>" oninput="autoSearch()">
             </div>
             <div class="filter-actions">
                 <button type="submit" class="btn-prim" style="padding:9px 20px;">
@@ -1044,6 +1044,50 @@ $categories = mysqli_query($con, 'SELECT * FROM lab_categories');
                         .then(() => location.reload());
                 } else alert(data.message);
             });
+    }
+
+    let searchTimer;
+    function autoSearch() {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => {
+            fetchResults();
+        }, 300);
+    }
+
+    function autoFilter() {
+        fetchResults();
+    }
+
+    function fetchResults() {
+        const form = document.getElementById('filterForm');
+        const formData = new FormData(form);
+        const params = new URLSearchParams(formData);
+        const url = 'inventory.php?' + params.toString();
+
+        // Update URL without reload
+        window.history.pushState({}, '', url);
+
+        // Show loading state if desired (optional)
+        const panel = document.querySelector('.inv-panel');
+        panel.style.opacity = '0.5';
+
+        fetch(url)
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newTable = doc.querySelector('.inv-panel').innerHTML;
+                panel.innerHTML = newTable;
+                panel.style.opacity = '1';
+                
+                // Update Clear button visibility
+                const oldActions = document.querySelector('.filter-actions');
+                const newActions = doc.querySelector('.filter-actions');
+                if (oldActions && newActions) {
+                    oldActions.innerHTML = newActions.innerHTML;
+                }
+            })
+            .catch(err => console.error('Error fetching results:', err));
     }
 </script>
 
