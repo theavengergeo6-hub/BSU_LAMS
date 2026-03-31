@@ -951,7 +951,7 @@ $recent_res = mysqli_query($con, "SELECT * FROM lab_reservations ORDER BY create
                             foreach ($rows as $row): ?>
                                 <tr>
                                     <td class="td-no">#<?= htmlspecialchars($row['reservation_no']) ?></td>
-                                    <td class="td-name"><?= htmlspecialchars($row['student_name']) ?></td>
+                                    <td class="td-name"><?= htmlspecialchars($row['user_name']) ?></td>
                                     <td class="td-date">
                                         <?= date('M d, Y', strtotime($row['reservation_date'])) ?><br>
                                         <span

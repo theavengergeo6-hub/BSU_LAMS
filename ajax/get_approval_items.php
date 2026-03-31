@@ -1,98 +1,367 @@
 <?php
-require('../config.php');
-require('../inc/auth.php');
-adminLogin();
+/**
+ * ajax/get_approval_items.php
+ * Returns the approval modal body HTML for a given reservation.
+ * Shows each item with: item name, requested qty (read-only),
+ * approved qty (editable, defaults to requested), available stock (read-only).
+ */
+require('../header.php'); // pulls in $con
 
-if(isset($_GET['id'])) {
-    $id = (int)$_GET['id'];
-    
-    // Fetch reservation details first
-    $q_res = "SELECT * FROM lab_reservations WHERE id = $id";
-    $res_query = mysqli_query($con, $q_res);
-    if(mysqli_num_rows($res_query) == 0) exit("Reservation not found.");
-    $res_info = mysqli_fetch_assoc($res_query);
-    
-    $is_pending = $res_info['status'] === 'Pending';
-    
-    // Render the beautiful info header
-    ?>
-    <form id='approvalForm' onsubmit='submitApproval(event)'>
-        <input type='hidden' name='reservation_id' value='<?= $id ?>'>
-        
-        <div class="row mb-4 bg-light p-4 rounded mx-0 border border-secondary border-opacity-10 shadow-sm" style="border-left: 5px solid <?= $is_pending ? 'var(--red)' : '#0d6efd' ?> !important;">
-            <div class="col-md-6 mb-3">
-                <span class="text-muted small text-uppercase fw-bold"><i class="bi bi-person me-1"></i> Student Name</span>
-                <div class="fw-bold fs-5 text-dark"><?= $res_info['student_name'] ?></div>
-            </div>
-            <div class="col-md-6 mb-3">
-                <span class="text-muted small text-uppercase fw-bold"><i class="bi bi-telephone me-1"></i> Contact Info</span>
-                <div class="fw-medium text-dark"><?= $res_info['contact_number'] ?></div>
-                <div class="fw-medium text-dark"><a href="mailto:<?= $res_info['student_email'] ?>" class="text-decoration-none text-danger"><?= $res_info['student_email'] ?></a></div>
-            </div>
-            <div class="col-md-6 mb-3">
-                <span class="text-muted small text-uppercase fw-bold"><i class="bi bi-journal-text me-1"></i> Subject & Course</span>
-                <div class="fw-bold text-dark"><?= $res_info['subject'] ?></div>
-                <div class="fw-medium text-dark"><span class="badge bg-secondary"><?= $res_info['course_section'] ?></span></div>
-            </div>
-            <div class="col-md-6 mb-3">
-                <span class="text-muted small text-uppercase fw-bold"><i class="bi bi-diagram-3 me-1"></i> Station Setup</span>
-                <div class="fw-bold text-dark"><?= $res_info['station'] ?></div>
-                <div class="fw-medium text-muted small">Batch: <?= $res_info['batch'] ?></div>
-            </div>
-            <div class="col-12 mt-2 pt-3 border-top border-secondary border-opacity-25">
-                <span class="text-muted small text-uppercase fw-bold"><i class="bi bi-calendar-event me-1"></i> Requested Schedule</span>
-                <div class="fw-bold fs-5 text-danger"><?= date('l, F d, Y', strtotime($res_info['reservation_date'])) ?> &nbsp;&bull;&nbsp; <?= $res_info['reservation_time'] ?></div>
-            </div>
-        </div>
-
-        <h6 class="fw-bold mb-3 text-dark"><i class="bi bi-box-seam me-2"></i>Requested Items</h6>
-        <div class='table-responsive mb-4 shadow-sm rounded'>
-            <table class='table table-bordered table-hover align-middle mb-0'>
-                <thead class='table-dark'>
-                    <tr>
-                        <th class="ps-3 border-0">Item Name</th>
-                        <th class='text-center border-0' width="120">Requested</th>
-                        <th class='text-center border-0' width="120">Stock</th>
-                        <th width='150' class='text-center border-0 pe-3'><?= $is_pending ? 'Approve Qty' : 'Approved' ?></th>
-                    </tr>
-                </thead>
-                <tbody class="border-top-0">
-    <?php
-    $q = "SELECT ri.id as ri_id, ri.item_id, ri.requested_quantity, ri.approved_quantity, i.item_name, i.available_quantity 
-          FROM lab_reservation_items ri 
-          JOIN lab_items i ON ri.item_id = i.id 
-          WHERE ri.reservation_id = $id";
-          
-    $res = mysqli_query($con, $q);
-    $can_approve = true;
-    
-    while($row = mysqli_fetch_assoc($res)) {
-        $max_approve = min($row['requested_quantity'], $row['available_quantity']);
-        $warning = ($row['requested_quantity'] > $row['available_quantity']) && $is_pending ? "<div class='text-danger fw-bold small mt-1'><i class='bi bi-exclamation-triangle-fill'></i> Shortage Warning</div>" : "";
-        if($row['available_quantity'] <= 0) $can_approve = false;
-        
-        $qty_cell = $is_pending 
-            ? "<input type='number' name='approve_qty[{$row['ri_id']}]' class='form-control form-control-lg text-center bg-light border-secondary fw-bold shadow-none px-1' value='{$max_approve}' min='0' max='{$row['available_quantity']}' required>"
-            : "<div class='fs-5 fw-bold text-primary text-center'>{$row['approved_quantity']}</div>";
-        
-        echo "<tr>
-                <td class='fw-bold text-dark ps-3'>{$row['item_name']} {$warning}</td>
-                <td class='text-center fw-bold fs-5 text-secondary'>{$row['requested_quantity']}</td>
-                <td class='text-center text-success fs-5 fw-bold'>{$row['available_quantity']}</td>
-                <td class='pe-3 py-3 align-middle'>
-                    {$qty_cell}
-                </td>
-              </tr>";
-    }
-    
-    echo "</tbody></table></div>
-          <div class='text-end mt-4 pt-3 border-top'>
-            <button type='button' class='btn btn-light shadow-sm px-4 me-2 border' data-bs-dismiss='modal'>Close Details</button>";
-            
-    if($is_pending) {
-        echo "<button type='submit' class='btn btn-danger shadow px-5 fw-bold'><i class='bi bi-check-circle-fill me-2'></i>Approve Reservation</button>";
-    }
-    
-    echo "</div></form>";
+$id = (int) ($_GET['id'] ?? 0);
+if (!$id) {
+    echo '<p class="text-danger">Invalid reservation.</p>';
+    exit;
 }
+
+// Fetch reservation details
+$res = mysqli_query($con, "SELECT * FROM lab_reservations WHERE id = $id");
+$r = mysqli_fetch_assoc($res);
+if (!$r) {
+    echo '<p class="text-danger">Reservation not found.</p>';
+    exit;
+}
+
+// Fetch items with available stock
+$items_q = mysqli_query($con, "
+    SELECT ri.id        AS res_item_id,
+           ri.item_id,
+           ri.requested_quantity,
+           i.item_name,
+           i.available_quantity
+    FROM lab_reservation_items ri
+    JOIN lab_items i ON ri.item_id = i.id
+    WHERE ri.reservation_id = $id
+");
+$items = [];
+while ($row = mysqli_fetch_assoc($items_q))
+    $items[] = $row;
 ?>
+
+<style>
+    /* ── Info grid ── */
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+
+    .info-block {
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px 14px;
+    }
+
+    .info-block-label {
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--text-3);
+        margin-bottom: 4px;
+    }
+
+    .info-block-value {
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: var(--text);
+    }
+
+    /* ── Items table in modal ── */
+    .items-section-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--text-3);
+        margin-bottom: 10px;
+    }
+
+    .items-approval-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-family: 'Sora', sans-serif;
+        margin-bottom: 20px;
+    }
+
+    .items-approval-table thead th {
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--text-3);
+        padding: 8px 12px;
+        background: var(--surface-2);
+        border-bottom: 1px solid var(--border-2);
+        text-align: left;
+    }
+
+    .items-approval-table thead th.center {
+        text-align: center;
+    }
+
+    .items-approval-table tbody td {
+        padding: 12px 12px;
+        border-bottom: 1px solid var(--border);
+        font-size: 0.84rem;
+        color: var(--text-2);
+        vertical-align: middle;
+    }
+
+    .items-approval-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .item-name-cell {
+        font-weight: 600;
+        color: var(--text) !important;
+    }
+
+    /* Qty pill (read-only display) */
+    .qty-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 38px;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 0.82rem;
+    }
+
+    .qty-requested {
+        background: rgba(180, 83, 9, .10);
+        color: #92400e;
+    }
+
+    .qty-stock {
+        background: rgba(15, 118, 110, .10);
+        color: #065f46;
+    }
+
+    .qty-stock.low {
+        background: rgba(192, 57, 43, .10);
+        color: #7f1d1d;
+    }
+
+    /* Approved qty input */
+    .approved-qty-wrap {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .approved-qty-input {
+        width: 70px;
+        padding: 5px 8px;
+        border: 1px solid var(--border-2);
+        border-radius: 7px;
+        font-family: 'Sora', sans-serif;
+        font-size: 0.84rem;
+        font-weight: 600;
+        color: var(--text);
+        background: var(--surface);
+        text-align: center;
+        transition: border-color .15s, box-shadow .15s;
+    }
+
+    .approved-qty-input:focus {
+        outline: none;
+        border-color: var(--red);
+        box-shadow: 0 0 0 3px rgba(192, 57, 43, .12);
+    }
+
+    .approved-qty-input.input-error {
+        border-color: var(--red) !important;
+        background: rgba(192, 57, 43, .05);
+    }
+
+    .qty-error-msg {
+        display: none;
+        font-size: 0.7rem;
+        color: var(--red);
+        font-weight: 600;
+        margin-top: 3px;
+    }
+
+    /* ── Footer actions ── */
+    .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        padding-top: 16px;
+        border-top: 1px solid var(--border);
+    }
+
+    .btn-modal-cancel {
+        padding: 9px 20px;
+        border-radius: 8px;
+        font-family: 'Sora', sans-serif;
+        font-size: 0.82rem;
+        font-weight: 600;
+        background: var(--surface-2);
+        color: var(--text-2);
+        border: 1px solid var(--border-2);
+        cursor: pointer;
+        transition: all .15s;
+    }
+
+    .btn-modal-cancel:hover {
+        background: var(--surface-3);
+        color: var(--text);
+    }
+
+    .btn-modal-approve {
+        padding: 9px 22px;
+        border-radius: 8px;
+        font-family: 'Sora', sans-serif;
+        font-size: 0.82rem;
+        font-weight: 600;
+        background: #064e3b;
+        color: #fff;
+        border: 1px solid #064e3b;
+        cursor: pointer;
+        transition: all .15s;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+    }
+
+    .btn-modal-approve:hover {
+        background: #065f46;
+    }
+
+    .btn-modal-approve:disabled {
+        opacity: .55;
+        cursor: not-allowed;
+    }
+</style>
+
+<!-- Reservation info -->
+<div class="info-grid">
+    <div class="info-block">
+        <div class="info-block-label">Student</div>
+        <div class="info-block-value"><?= htmlspecialchars($r['user_name']) ?></div>
+    </div>
+    <div class="info-block">
+        <div class="info-block-label">Subject / Station</div>
+        <div class="info-block-value"><?= htmlspecialchars($r['subject']) ?> · <?= htmlspecialchars($r['station']) ?>
+        </div>
+    </div>
+    <div class="info-block">
+        <div class="info-block-label">Date & Time</div>
+        <div class="info-block-value">
+            <?= date('M d, Y', strtotime($r['reservation_date'])) ?>
+            · <?= htmlspecialchars($r['reservation_time']) ?>
+        </div>
+    </div>
+    <div class="info-block">
+        <div class="info-block-label">Batch / Section</div>
+        <div class="info-block-value"><?= htmlspecialchars($r['batch']) ?> ·
+            <?= htmlspecialchars($r['course_section']) ?>
+        </div>
+    </div>
+</div>
+
+<?php if (empty($items)): ?>
+    <p style="color:var(--text-3);font-size:.84rem;">No items requested for this reservation.</p>
+<?php else: ?>
+
+    <div class="items-section-label">Requested Items — Set Approved Quantities</div>
+
+    <form id="approvalForm" onsubmit="submitApproval(event)">
+        <input type="hidden" name="reservation_id" value="<?= $id ?>">
+
+        <table class="items-approval-table">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th class="center">Requested</th>
+                    <th class="center">Available Stock</th>
+                    <th class="center">Approved Qty</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($items as $item):
+                    $stock = (int) $item['available_quantity'];
+                    $req = (int) $item['requested_quantity'];
+                    $max = min($req, $stock); // can't approve more than requested OR more than stock
+                    $low = $stock <= 5;
+                    ?>
+                    <tr>
+                        <td class="item-name-cell"><?= htmlspecialchars($item['item_name']) ?></td>
+                        <td style="text-align:center;">
+                            <span class="qty-pill qty-requested"><?= $req ?></span>
+                        </td>
+                        <td style="text-align:center;">
+                            <span class="qty-pill qty-stock <?= $low ? 'low' : '' ?>">
+                                <?= $stock ?>
+                                <?= $low ? ' ⚠' : '' ?>
+                            </span>
+                        </td>
+                        <td style="text-align:center;">
+                            <div class="approved-qty-wrap" style="justify-content:center;">
+                                <div>
+                                    <input type="number" class="approved-qty-input" name="approved[<?= $item['res_item_id'] ?>]"
+                                        data-item-id="<?= $item['res_item_id'] ?>" data-max-req="<?= $req ?>"
+                                        data-max-stock="<?= $stock ?>" value="<?= $max ?>" min="0" max="<?= $max ?>"
+                                        oninput="validateQty(this)">
+                                    <div class="qty-error-msg" id="err-<?= $item['res_item_id'] ?>"></div>
+                                </div>
+                            </div>
+                            <?php if ($stock === 0): ?>
+                                <div style="font-size:.68rem;color:var(--red);margin-top:4px;font-weight:600;">Out of stock</div>
+                            <?php elseif ($stock < $req): ?>
+                                <div style="font-size:.68rem;color:#92400e;margin-top:4px;">Max approvable: <?= $stock ?></div>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+
+        <div class="modal-actions">
+            <button type="button" class="btn-modal-cancel" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn-modal-approve" id="approveSubmitBtn">
+                <i class="bi bi-check-lg"></i> Approve Reservation
+            </button>
+        </div>
+    </form>
+
+    <script>
+        function validateQty(input) {
+            const maxReq = parseInt(input.dataset.maxReq);
+            const maxStock = parseInt(input.dataset.maxStock);
+            const val = parseInt(input.value) || 0;
+            const id = input.dataset.itemId;
+            const errEl = document.getElementById('err-' + id);
+
+            input.classList.remove('input-error');
+            errEl.style.display = 'none';
+            errEl.textContent = '';
+
+            if (val > maxReq) {
+                input.classList.add('input-error');
+                errEl.textContent = 'Cannot exceed requested qty (' + maxReq + ')';
+                errEl.style.display = 'block';
+            } else if (val > maxStock) {
+                input.classList.add('input-error');
+                errEl.textContent = 'Cannot exceed available stock (' + maxStock + ')';
+                errEl.style.display = 'block';
+            } else if (val < 0) {
+                input.classList.add('input-error');
+                errEl.textContent = 'Cannot be negative';
+                errEl.style.display = 'block';
+            }
+
+            // Disable submit if any field has an error
+            const hasErrors = document.querySelectorAll('.approved-qty-input.input-error').length > 0;
+            document.getElementById('approveSubmitBtn').disabled = hasErrors;
+        }
+
+        // Run validation on all fields once on load (in case stock < requested for any item)
+        document.querySelectorAll('.approved-qty-input').forEach(validateQty);
+    </script>
+
+<?php endif; ?>

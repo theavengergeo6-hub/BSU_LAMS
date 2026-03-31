@@ -6,7 +6,7 @@ $status_filter = isset($_GET['status']) ? mysqli_real_escape_string($con, $_GET[
 
 $where_clause = "";
 if($search_email) {
-    $where_clause .= " AND (student_email = '$search_email' OR reservation_no = '$search_email')";
+    $where_clause .= " AND (user_email = '$search_email' OR reservation_no = '$search_email')";
 }
 if($status_filter) {
     if($where_clause) $where_clause .= " AND status = '$status_filter'";

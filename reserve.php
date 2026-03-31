@@ -888,19 +888,19 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
                 <div class="form-row">
                     <div class="field">
                         <label>Full Name <span class="req">*</span></label>
-                        <input type="text" id="req_name" placeholder="Juan Dela Cruz">
+                        <input type="text" id="req_name" oninput="saveFormData()" onblur="capitalizeInput(this); saveFormData()">
                     </div>
                     <div class="field">
                         <label>Email Address <span class="req">*</span></label>
-                        <input type="email" id="req_email" placeholder="juan@g.batstate-u.edu.ph">
+                        <input type="email" id="req_email" oninput="saveFormData()">
                     </div>
                     <div class="field">
                         <label>Contact Number <span class="req">*</span></label>
-                        <input type="text" id="req_contact" placeholder="09123456789">
+                        <input type="text" id="req_contact" oninput="saveFormData()">
                     </div>
                     <div class="field">
                         <label>Course &amp; Section <span class="req">*</span></label>
-                        <input type="text" id="req_course" placeholder="BSHM 3A">
+                        <input type="text" id="req_course" oninput="saveFormData()" onblur="capitalizeInput(this); saveFormData()">
                     </div>
                 </div>
             </div>
@@ -916,23 +916,23 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
                 <div class="form-row">
                     <div class="field">
                         <label>Subject Code / Name <span class="req">*</span></label>
-                        <input type="text" id="req_subject" placeholder="HM 101">
+                        <input type="text" id="req_subject" oninput="saveFormData()" onblur="capitalizeInput(this); saveFormData()">
                     </div>
                     <div class="field">
                         <label>Station Setup <span class="req">*</span></label>
-                        <input type="text" id="req_station" placeholder="Station 1">
+                        <input type="text" id="req_station" oninput="saveFormData()">
                     </div>
                     <div class="field">
                         <label>Batch No. <span class="req">*</span></label>
-                        <input type="text" id="req_batch" placeholder="Batch 1">
+                        <input type="text" id="req_batch" oninput="saveFormData()">
                     </div>
                     <div class="field">
                         <label>Date <span class="req">*</span></label>
-                        <input type="date" id="req_date" min="<?= date('Y-m-d') ?>">
+                        <input type="date" id="req_date" min="<?= date('Y-m-d') ?>" onchange="saveFormData()">
                     </div>
                     <div class="field">
                         <label>Time (7AM – 5PM) <span class="req">*</span></label>
-                        <select id="req_time">
+                        <select id="req_time" onchange="saveFormData()">
                             <option value="" disabled selected>Select time slot</option>
                             <?php
                             $s = strtotime('07:00');
@@ -1074,6 +1074,13 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
     let catNames = {};   // { catId: 'Display Name' }
     let activeCatId = null;
 
+    function enforceMax(input) {
+        let val = parseInt(input.value);
+        let max = parseInt(input.max);
+        if (val > max) input.value = max;
+        if (val < 1 && input.value !== "") input.value = 1;
+    }
+
     // Seed category names from PHP
     const allCategories = <?= json_encode(array_map(fn($c) => ['id' => (int) $c['id'], 'name' => $c['name']], $categories)) ?>;
     allCategories.forEach(c => { catNames[c.id] = c.name; });
@@ -1084,6 +1091,7 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
             activeCatId = <?= (int) $categories[0]['id'] ?>;
             loadCategory(activeCatId);
         <?php endif; ?>
+        loadFormData();
     });
 
     // ── Category switch ───────────────────────────────────
@@ -1260,7 +1268,7 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
                         ${!oos ? `
                         <div class="qty-row">
                             <label>Qty</label>
-                            <input type="number" id="qty-${item.id}" value="1" min="1" max="${avail}">
+                            <input type="number" id="qty-${item.id}" value="1" min="1" max="${avail}" oninput="enforceMax(this)">
                         </div>
                         <button class="btn-add${inCart ? ' added' : ''}" id="addbtn-${item.id}"
                             onclick="toggleCart(${item.id}, '${safe}', ${avail}, ${catId})">
@@ -1314,7 +1322,7 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
                 </div>
                 <div class="variant-actions">
                     ${!oos ? `
-                        <input type="number" id="vqty-${v.id}" class="variant-qty" value="1" min="1" max="${avail}">
+                        <input type="number" id="vqty-${v.id}" class="variant-qty" value="1" min="1" max="${avail}" oninput="enforceMax(this)">
                         <button class="btn-add btn-sm${inCart ? ' added' : ''}" style="width: auto; padding: 6px 14px;" 
                             id="vaddbtn-${v.id}" onclick="toggleVariantInCart(${v.id}, '${safe}', ${avail}, ${catId})">
                             ${inCart ? 'Added' : 'Add'}
@@ -1344,6 +1352,7 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
             const btn = document.getElementById('vaddbtn-' + id);
             if (btn) { btn.classList.add('added'); btn.innerHTML = 'Added'; }
         }
+        saveFormData();
         renderCart();
     }
 
@@ -1365,6 +1374,7 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
 
         const btn = document.getElementById('addbtn-' + itemId);
         if (btn) { btn.classList.add('added'); btn.innerHTML = '<i class="bi bi-cart-check"></i> Added'; }
+        saveFormData();
         renderCart();
     }
 
@@ -1378,6 +1388,7 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
         const vbtn = document.getElementById('vaddbtn-' + itemId);
         if (vbtn) { vbtn.classList.remove('added'); vbtn.innerHTML = 'Add'; }
 
+        saveFormData();
         renderCart();
     }
 
@@ -1473,29 +1484,42 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
             return;
         }
 
-        const payload = {
-            name: document.getElementById('req_name').value.trim(),
-            email: document.getElementById('req_email').value.trim(),
-            contact: document.getElementById('req_contact').value.trim(),
-            course: document.getElementById('req_course').value.trim(),
-            subject: document.getElementById('req_subject').value.trim(),
-            station: document.getElementById('req_station').value.trim(),
-            batch: document.getElementById('req_batch').value.trim(),
-            date: document.getElementById('req_date').value,
-            time: document.getElementById('req_time').value,
-            items: Object.entries(labCart).map(([id, v]) => ({ id, name: v.name, qty: v.qty })),
-        };
+        const formData = new FormData();
+        formData.append('name', document.getElementById('req_name').value.trim());
+        formData.append('email', document.getElementById('req_email').value.trim());
+        formData.append('contact', document.getElementById('req_contact').value.trim());
+        formData.append('course', document.getElementById('req_course').value.trim());
+        formData.append('subject', document.getElementById('req_subject').value.trim());
+        formData.append('station', document.getElementById('req_station').value.trim());
+        formData.append('batch', document.getElementById('req_batch').value.trim());
+        formData.append('date', document.getElementById('req_date').value);
+        formData.append('time', document.getElementById('req_time').value);
 
-        fetch('ajax/submit_reservation.php', {
+        const cartObj = {};
+        Object.entries(labCart).forEach(([id, v]) => {
+            cartObj[id] = { quantity: v.qty };
+        });
+        formData.append('cart', JSON.stringify(cartObj));
+
+        fetch('ajax/reservation_submit.php', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
+            body: formData
         })
-            .then(r => r.json())
+            .then(async r => {
+                const text = await r.text();
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    console.error('Server response was not JSON:', text);
+                    throw new Error('Invalid JSON response from server');
+                }
+            })
             .then(res => {
-                if (res.success) {
+                if (res.status === 'success') {
                     showAlert('Reservation submitted! You will be notified once approved.', 'success');
                     labCart = {};
+                    sessionStorage.removeItem('reserve_form_data');
+                    sessionStorage.removeItem('reserve_cart');
                     renderCart();
                     document.querySelectorAll('.btn-add.added').forEach(b => {
                         b.classList.remove('added');
@@ -1507,10 +1531,54 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
                         });
                     document.getElementById('req_time').selectedIndex = 0;
                 } else {
-                    showAlert(res.message || 'Something went wrong. Please try again.', 'error');
+                    showAlert(res.status === 'error' ? res.message : 'Something went wrong. Please try again.', 'error');
                 }
             })
-            .catch(() => showAlert('Network error. Please try again.', 'error'));
+            .catch((err) => {
+                console.error(err);
+                showAlert('Submission failed: ' + err.message, 'error');
+            });
+    }
+    function saveFormData() {
+        const data = {
+            name: document.getElementById('req_name').value,
+            email: document.getElementById('req_email').value,
+            contact: document.getElementById('req_contact').value,
+            course: document.getElementById('req_course').value,
+            subject: document.getElementById('req_subject').value,
+            station: document.getElementById('req_station').value,
+            batch: document.getElementById('req_batch').value,
+            date: document.getElementById('req_date').value,
+            time: document.getElementById('req_time').value
+        };
+        sessionStorage.setItem('reserve_form_data', JSON.stringify(data));
+        sessionStorage.setItem('reserve_cart', JSON.stringify(labCart));
+    }
+
+    function loadFormData() {
+        const rawData = sessionStorage.getItem('reserve_form_data');
+        if (rawData) {
+            const data = JSON.parse(rawData);
+            document.getElementById('req_name').value = data.name || '';
+            document.getElementById('req_email').value = data.email || '';
+            document.getElementById('req_contact').value = data.contact || '';
+            document.getElementById('req_course').value = data.course || '';
+            document.getElementById('req_subject').value = data.subject || '';
+            document.getElementById('req_station').value = data.station || '';
+            document.getElementById('req_batch').value = data.batch || '';
+            document.getElementById('req_date').value = data.date || '';
+            document.getElementById('req_time').value = data.time || '';
+        }
+        const rawCart = sessionStorage.getItem('reserve_cart');
+        if (rawCart) {
+            labCart = JSON.parse(rawCart);
+            renderCart();
+        }
+    }
+
+    function capitalizeInput(el) {
+        if (!el.value) return;
+        el.value = el.value.toLowerCase().split(' ').map(w => w.charAt(0).toUpperCase() + w.substr(1)).join(' ');
     }
 </script>
 

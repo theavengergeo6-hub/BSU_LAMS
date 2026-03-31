@@ -316,9 +316,9 @@ body, .main-content, #main-content {
                 <tr>
                     <td><span class="td-no">#<?= htmlspecialchars($row['reservation_no']) ?></span></td>
                     <td>
-                        <div class="td-name"><?= htmlspecialchars($row['student_name']) ?></div>
-                        <div class="td-sub"><?= htmlspecialchars($row['student_email']) ?></div>
-                        <div class="td-sub"><?= htmlspecialchars($row['contact_number']) ?></div>
+                        <div class="td-name"><?= htmlspecialchars($row['user_name']) ?></div>
+                        <div class="td-sub"><?= htmlspecialchars($row['user_email']) ?></div>
+                        <div class="td-sub"><?= htmlspecialchars($row['user_contact']) ?></div>
                         <span class="td-badge"><?= htmlspecialchars($row['course_section']) ?></span>
                     </td>
                     <td>

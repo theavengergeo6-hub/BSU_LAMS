@@ -15,9 +15,9 @@ if(isset($_GET['id'])) {
     
     echo "<h5 class='border-bottom pb-2 fw-bold text-danger mb-3'>Reservation No: {$res_row['reservation_no']}</h5>";
     echo "<div class='row mb-4 bg-light p-3 rounded'>
-            <div class='col-sm-6 mb-2'><strong>Name:</strong> {$res_row['student_name']}</div>
-            <div class='col-sm-6 mb-2'><strong>Email:</strong> {$res_row['student_email']}</div>
-            <div class='col-sm-6 mb-2'><strong>Contact:</strong> {$res_row['contact_number']}</div>
+            <div class='col-sm-6 mb-2'><strong>Name:</strong> {$res_row['user_name']}</div>
+            <div class='col-sm-6 mb-2'><strong>Email:</strong> {$res_row['user_email']}</div>
+            <div class='col-sm-6 mb-2'><strong>Contact:</strong> {$res_row['user_contact']}</div>
             <div class='col-sm-6 mb-2'><strong>Course & Sec:</strong> {$res_row['course_section']}</div>
             <div class='col-sm-6 mb-2'><strong>Subject:</strong> {$res_row['subject']}</div>
             <div class='col-sm-6 mb-2'><strong>Station:</strong> {$res_row['station']}</div>
