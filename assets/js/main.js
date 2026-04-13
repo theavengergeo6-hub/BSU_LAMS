@@ -1,6 +1,6 @@
-// BSU LAMS Global Helpers
+// KLRS Global Helpers
 document.addEventListener("DOMContentLoaded", () => {
-    console.log("BSU LAMS Global Helpers Loaded");
+    console.log("KLRS Global Helpers Loaded");
 });
 
 function showToast(type, message) {

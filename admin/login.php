@@ -35,7 +35,7 @@ if(isset($_POST['login'])){
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Login Panel - BSU LAMS</title>
+    <title>Admin Login Panel - KLRS</title>
     <?php require('../inc/link.php'); ?>
     <style>
         body { 
@@ -147,7 +147,7 @@ if(isset($_POST['login'])){
             <div class="login-header">
                 <div class="login-icon-wrapper mb-2"><i class="bi bi-shield-lock-fill text-white"></i></div>
                 <h3 class="fw-bold m-0 z-1 position-relative">Admin Portal</h3>
-                <p class="mb-0 mt-2 text-white-50 z-1 position-relative">BSU Laboratory Asset Management</p>
+                <p class="mb-0 mt-2 text-white-50 z-1 position-relative">Kitchen Laboratory Requisition System (KLRS)</p>
             </div>
         <div class="p-4">
             <?php if(isset($error)) echo "<div class='alert alert-danger'>$error</div>"; ?>

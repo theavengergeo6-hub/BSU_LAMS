@@ -863,7 +863,7 @@ $recent_res = mysqli_query($con, "SELECT * FROM lab_reservations ORDER BY create
         <div class="dash-header-right">
             <div class="live-dot">Live</div>
             <a href="reservations.php" class="btn-dash btn-dash-ghost">
-                <i class="bi bi-list-ul"></i> All Reservations
+                <i class="bi bi-list-ul"></i> All Requisitions
             </a>
             <a href="inventory.php" class="btn-dash btn-dash-primary">
                 <i class="bi bi-plus-lg"></i> Add Item
@@ -919,7 +919,7 @@ $recent_res = mysqli_query($con, "SELECT * FROM lab_reservations ORDER BY create
             <div class="panel-header">
                 <div class="panel-title">
                     <div class="panel-title-icon"><i class="bi bi-clock-history"></i></div>
-                    Recent Reservations
+                    Recent Requisitions
                 </div>
                 <a href="reservations.php" class="panel-link">
                     View all <i class="bi bi-arrow-right"></i>
@@ -945,7 +945,7 @@ $recent_res = mysqli_query($con, "SELECT * FROM lab_reservations ORDER BY create
                             <tr>
                                 <td colspan="4"
                                     style="text-align:center;padding:40px;color:var(--text-3);font-size:0.85rem;">No
-                                    reservations yet.</td>
+                                    requisitions yet.</td>
                             </tr>
                         <?php else:
                             foreach ($rows as $row): ?>

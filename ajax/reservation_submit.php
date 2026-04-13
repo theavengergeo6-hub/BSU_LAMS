@@ -81,10 +81,13 @@ try {
     }
     
     // Notification for admin
-    $notif_msg = mysqli_real_escape_string($con, "Student {$name} requested a reservation for {$date} at {$time}.");
-    $con->query("INSERT INTO lab_admin_notifications (reservation_id, message) VALUES ($res_id, '$notif_msg')");
+    $notif_msg = mysqli_real_escape_string($con, "New Requisition ($res_no): Student {$name} requested a requisition for {$date} at {$time}.");
+    if(!$con->query("INSERT INTO lab_admin_notifications (reservation_id, message) VALUES ($res_id, '$notif_msg')")){
+        // Non-fatal error, let it pass or log it
+        error_log("Failed to insert notification: " . $con->error);
+    }
     
-    send_response('success', 'Reservation submitted', ['res_no' => $res_no]);
+    send_response('success', 'Requisition submitted', ['res_no' => $res_no]);
 
 } catch (Exception $e) {
     send_response('error', $e->getMessage());

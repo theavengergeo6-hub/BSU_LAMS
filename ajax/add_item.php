@@ -34,7 +34,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['item_name'])) {
             // log item creation
             $admin_id = $_SESSION['adminId'] ?? 1;
             $remarks = "Initial stock creation";
-            $log = $con->prepare("INSERT INTO lab_item_logs (item_id, change_type, quantity, remarks, performed_by) VALUES (?, '+', ?, ?, ?)");
+            $log = $con->prepare("INSERT INTO lab_item_logs (item_id, change_type, quantity_change, remarks, performed_by) VALUES (?, '+', ?, ?, ?)");
             $log->bind_param("iisi", $item_id, $qty, $remarks, $admin_id);
             $log->execute();
             

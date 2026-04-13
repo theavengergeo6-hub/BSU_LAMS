@@ -12,7 +12,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id'], $_POST['status'])
     // Check old status
     $q = mysqli_query($con, "SELECT status, reservation_no FROM lab_reservations WHERE id=$id");
     if(mysqli_num_rows($q) == 0) {
-        echo json_encode(['status'=>'error', 'message'=>'Reservation not found']);
+        echo json_encode(['status'=>'error', 'message'=>'Requisition not found']);
         exit;
     }
     $row_res = mysqli_fetch_assoc($q);
@@ -25,7 +25,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id'], $_POST['status'])
         $admin_id = $_SESSION['adminId'] ?? 1;
         
         // If completed or denied (from approved/ongoing stage), return items to inventory
-        if ( ($new_status == 'Completed' || $new_status == 'Denied') && in_array($old_status, ['Approved', 'Ongoing']) ) 
+        if ( (strtolower($new_status) == 'completed' || strtolower($new_status) == 'denied') && in_array(strtolower($old_status), ['approved', 'ongoing', 'pending']) ) 
         {
             $items_q = $con->query("SELECT item_id, approved_quantity FROM lab_reservation_items WHERE reservation_id=$id AND approved_quantity > 0");
             while($item = $items_q->fetch_assoc()) {
@@ -37,8 +37,8 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id'], $_POST['status'])
                 
                 // Log return
                 $action_word = $new_status == 'Completed' ? 'completed' : 'cancelled';
-                $remarks = "Reservation $res_no $action_word (returned +$qty)";
-                $stmt = $con->prepare("INSERT INTO lab_item_logs (item_id, change_type, quantity, remarks, performed_by) VALUES (?, '+', ?, ?, ?)");
+                $remarks = "Requisition $res_no $action_word (returned +$qty)";
+                $stmt = $con->prepare("INSERT INTO lab_item_logs (item_id, change_type, quantity_change, remarks, performed_by) VALUES (?, '+', ?, ?, ?)");
                 $stmt->bind_param("iisi", $item_id, $qty, $remarks, $admin_id);
                 $stmt->execute();
             }

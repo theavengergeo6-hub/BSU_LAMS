@@ -2,19 +2,17 @@
 <div class="container-fluid bg-white mt-5">
     <div class="row">
         <div class="col-lg-4 p-4">
-            <h4 class="fw-bold fs-4 mb-2 text-danger">BSU LAMS</h4>
+            <h4 class="fw-bold fs-4 mb-2 text-danger">KLRS</h4>
             <p>
-                Laboratory Asset Management System for the Hot Kitchen, Cold Kitchen, Food & Beverage Services, and
+                Kitchen Laboratory Requisition System for the Hot Kitchen, Cold Kitchen, Food & Beverage Services, and
                 Laundry facilities of Batangas State University.
             </p>
         </div>
         <div class="col-lg-4 p-4">
             <h5 class="mb-3 text-dark">Links</h5>
             <a href="<?= BASE_URL ?>/index.php" class="d-inline-block mb-2 text-dark text-decoration-none">Home</a><br>
-            <a href="<?= BASE_URL ?>/reserve.php" class="d-inline-block mb-2 text-dark text-decoration-none">Make
-                Reservation</a><br>
-            <a href="<?= BASE_URL ?>/my_reservations.php" class="d-inline-block mb-2 text-dark text-decoration-none">My
-                Reservations</a><br>
+            <a href="<?= BASE_URL ?>/reserve.php" class="d-inline-block mb-2 text-dark text-decoration-none">Request Equipment</a><br>
+            <a href="<?= BASE_URL ?>/my_reservations.php" class="d-inline-block mb-2 text-dark text-decoration-none">My Requisitions</a><br>
         </div>
         <div class="col-lg-4 p-4">
             <h5 class="mb-3 text-dark">Contact Us</h5>

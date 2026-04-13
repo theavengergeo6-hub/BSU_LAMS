@@ -7,13 +7,13 @@ if(isset($_GET['id'])) {
     // Fetch Reservation Info
     $res_q = mysqli_query($con, "SELECT * FROM lab_reservations WHERE id = $id");
     if(mysqli_num_rows($res_q) == 0) {
-        echo "<div class='alert alert-danger'>Reservation not found.</div>";
+        echo "<div class='alert alert-danger'>Requisition not found.</div>";
         exit;
     }
     
     $res_row = mysqli_fetch_assoc($res_q);
     
-    echo "<h5 class='border-bottom pb-2 fw-bold text-danger mb-3'>Reservation No: {$res_row['reservation_no']}</h5>";
+    echo "<h5 class='border-bottom pb-2 fw-bold text-danger mb-3'>Requisition No: {$res_row['reservation_no']}</h5>";
     echo "<div class='row mb-4 bg-light p-3 rounded'>
             <div class='col-sm-6 mb-2'><strong>Name:</strong> {$res_row['user_name']}</div>
             <div class='col-sm-6 mb-2'><strong>Email:</strong> {$res_row['user_email']}</div>

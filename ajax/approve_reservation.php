@@ -14,7 +14,7 @@
  *  4. Update lab_reservations.status = 'Approved'
  *  All inside a transaction so it's atomic.
  */
-require('../header.php'); // pulls in $con
+require_once('../config.php'); // pulls in $con
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -34,11 +34,11 @@ if (!$reservation_id || empty($approved)) {
 $res_check = mysqli_query($con, "SELECT id, status FROM lab_reservations WHERE id = $reservation_id");
 $reservation = mysqli_fetch_assoc($res_check);
 if (!$reservation) {
-    echo json_encode(['status' => 'error', 'message' => 'Reservation not found.']);
+    echo json_encode(['status' => 'error', 'message' => 'Requisition not found.']);
     exit;
 }
-if ($reservation['status'] !== 'Pending') {
-    echo json_encode(['status' => 'error', 'message' => 'Reservation is no longer pending (status: ' . $reservation['status'] . ').']);
+if (strtolower($reservation['status']) !== 'pending') {
+    echo json_encode(['status' => 'error', 'message' => 'Requisition is no longer pending (status: ' . $reservation['status'] . ').']);
     exit;
 }
 
@@ -63,7 +63,7 @@ foreach ($approved as $res_item_id => $qty) {
     $item = mysqli_fetch_assoc($item_q);
 
     if (!$item) {
-        echo json_encode(['status' => 'error', 'message' => "Item record #$res_item_id not found or doesn't belong to this reservation."]);
+        echo json_encode(['status' => 'error', 'message' => "Item record #$res_item_id not found or doesn't belong to this requisition."]);
         exit;
     }
 
@@ -132,7 +132,7 @@ try {
 
     echo json_encode([
         'status' => 'success',
-        'message' => 'Reservation approved successfully. Inventory updated with approved quantities.'
+        'message' => 'Requisition approved successfully. Inventory updated with approved quantities.'
     ]);
 
 } catch (Exception $e) {

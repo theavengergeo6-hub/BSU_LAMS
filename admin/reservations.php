@@ -97,8 +97,8 @@ body, .main-content, #main-content {
 }
 .res-tab.active .tab-count { background: var(--red); color: #fff; }
 
-/* ── Main panel ── */
-.res-panel {
+/* ── Responsive Grid Logic ── */
+.res-table-container { 
     background: var(--surface);
     border: 1px solid var(--border-2);
     border-radius: 0 12px 12px 12px;
@@ -108,7 +108,9 @@ body, .main-content, #main-content {
 }
 
 /* ── Table ── */
-.res-table { width: 100%; border-collapse: collapse; }
+.res-table { width: 100%; border-collapse: collapse; display: table; }
+.card-view { display: none; }
+
 .res-table thead tr { border-bottom: 1px solid var(--border-2); }
 .res-table thead th {
     font-size: 0.68rem; font-weight: 700;
@@ -250,26 +252,67 @@ body, .main-content, #main-content {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-@media (max-width: 768px) {
+@media (max-width: 992px) {
     .page-wrap { padding: 20px 16px 40px; }
-    .res-table { display: block; overflow-x: auto; }
+    .res-table { display: none !important; }
+    .card-view { 
+        display: grid; 
+        grid-template-columns: 1fr; 
+        gap: 16px; 
+        padding: 16px; 
+    }
+    
+    .res-card {
+        background: var(--surface);
+        border: 1px solid var(--border-2);
+        border-radius: 12px;
+        padding: 16px;
+        animation: fadeUp .4s ease forwards;
+    }
+    
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 10px;
+    }
+    
+    .card-body-row {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-bottom: 12px;
+    }
+    
+    .card-label {
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--text-3);
+        letter-spacing: 0.05em;
+    }
+    
+    .card-value {
+        font-size: 0.84rem;
+        color: var(--text);
+        font-weight: 600;
+    }
 }
 </style>
 
 <div class="page-wrap">
-
-    <!-- Header -->
     <div class="page-header">
         <div>
             <div class="page-eyebrow">Admin Panel</div>
-            <h1 class="page-title">Manage Reservations</h1>
+            <h1 class="page-title">Manage Requisitions</h1>
         </div>
     </div>
 
     <!-- Tabs -->
     <div class="res-tabs">
         <?php
-        // Count per status for badges
         $counts = [];
         foreach ($statuses as $st) {
             $cr = mysqli_query($con, "SELECT COUNT(*) as c FROM lab_reservations WHERE status='".mysqli_real_escape_string($con,$st)."'");
@@ -278,19 +321,24 @@ body, .main-content, #main-content {
         foreach ($statuses as $st):
         ?>
         <a class="res-tab <?= $status_tab == $st ? 'active' : '' ?>" href="?tab=<?= $st ?>">
-            <?= $st ?>
-            <span class="tab-count"><?= $counts[$st] ?></span>
+            <?= $st ?> <span class="tab-count"><?= $counts[$st] ?></span>
         </a>
         <?php endforeach; ?>
     </div>
 
-    <!-- Panel -->
-    <div class="res-panel">
-        <div style="overflow-x:auto;">
+    <!-- Main Container -->
+    <div class="res-table-container">
+        <?php
+        $q   = "SELECT * FROM lab_reservations WHERE status = '$status_tab' ORDER BY reservation_date ASC, reservation_time ASC";
+        $res = mysqli_query($con, $q);
+
+        if (mysqli_num_rows($res) > 0): ?>
+            
+            <!-- Desktop Table View -->
             <table class="res-table">
                 <thead>
                     <tr>
-                        <th>Res. No.</th>
+                        <th>Req. No.</th>
                         <th>Student</th>
                         <th>Subject / Station</th>
                         <th>Schedule</th>
@@ -300,46 +348,30 @@ body, .main-content, #main-content {
                     </tr>
                 </thead>
                 <tbody>
-                <?php
-                $q   = "SELECT * FROM lab_reservations WHERE status = '$status_tab' ORDER BY reservation_date ASC, reservation_time ASC";
-                $res = mysqli_query($con, $q);
-
-                if (mysqli_num_rows($res) > 0):
-                    while ($row = mysqli_fetch_assoc($res)):
-                        $id = $row['id'];
-                        $items_q  = mysqli_query($con, "SELECT ri.requested_quantity, i.item_name FROM lab_reservation_items ri JOIN lab_items i ON ri.item_id = i.id WHERE ri.reservation_id = $id");
-                        $items_str = '';
-                        while ($itm = mysqli_fetch_assoc($items_q)) {
-                            $items_str .= '<span style="display:block">· '.htmlspecialchars($itm['item_name']).' <strong>×'.$itm['requested_quantity'].'</strong></span>';
-                        }
+                <?php 
+                while ($row = mysqli_fetch_assoc($res)): 
+                    $id = $row['id'];
+                    $items_q  = mysqli_query($con, "SELECT ri.requested_quantity, i.item_name FROM lab_reservation_items ri JOIN lab_items i ON ri.item_id = i.id WHERE ri.reservation_id = $id");
+                    $items_str = '';
+                    while ($itm = mysqli_fetch_assoc($items_q)) $items_str .= '<span style="display:block">· '.htmlspecialchars($itm['item_name']).' <strong>×'.$itm['requested_quantity'].'</strong></span>';
                 ?>
                 <tr>
                     <td><span class="td-no">#<?= htmlspecialchars($row['reservation_no']) ?></span></td>
                     <td>
                         <div class="td-name"><?= htmlspecialchars($row['user_name']) ?></div>
                         <div class="td-sub"><?= htmlspecialchars($row['user_email']) ?></div>
-                        <div class="td-sub"><?= htmlspecialchars($row['user_contact']) ?></div>
                         <span class="td-badge"><?= htmlspecialchars($row['course_section']) ?></span>
                     </td>
                     <td>
-                        <div style="font-weight:600;color:var(--text);font-size:.84rem;"><?= htmlspecialchars($row['subject']) ?></div>
+                        <div style="font-weight:600;font-size:.84rem;color:var(--text);"><?= htmlspecialchars($row['subject']) ?></div>
                         <div class="td-sub"><?= htmlspecialchars($row['station']) ?> · <?= htmlspecialchars($row['batch']) ?></div>
                     </td>
                     <td style="white-space:nowrap;">
-                        <div style="font-weight:600;color:var(--text);font-size:.84rem;">
-                            <i class="bi bi-calendar3" style="color:var(--red);margin-right:4px;"></i>
-                            <?= date('M d, Y', strtotime($row['reservation_date'])) ?>
-                        </div>
-                        <div class="td-sub">
-                            <i class="bi bi-clock" style="margin-right:4px;"></i><?= htmlspecialchars($row['reservation_time']) ?>
-                        </div>
+                        <div style="font-weight:600;font-size:.84rem;color:var(--text);"><i class="bi bi-calendar3" style="color:var(--red);margin-right:4px;"></i> <?= date('M d, Y', strtotime($row['reservation_date'])) ?></div>
+                        <div class="td-sub"><i class="bi bi-clock" style="margin-right:4px;"></i> <?= htmlspecialchars($row['reservation_time']) ?></div>
                     </td>
                     <td class="td-items"><?= $items_str ?: '<span style="color:var(--text-3)">—</span>' ?></td>
-                    <td>
-                        <span class="status-badge status-<?= htmlspecialchars($row['status']) ?>">
-                            <?= htmlspecialchars($row['status']) ?>
-                        </span>
-                    </td>
+                    <td><span class="status-badge status-<?= htmlspecialchars($row['status']) ?>"><?= htmlspecialchars($row['status']) ?></span></td>
                     <td style="text-align:center;">
                         <div style="display:flex;flex-direction:column;gap:5px;min-width:130px;">
                         <?php if ($status_tab == 'Pending'): ?>
@@ -377,19 +409,52 @@ body, .main-content, #main-content {
                         </div>
                     </td>
                 </tr>
-                <?php endwhile; else: ?>
-                <tr>
-                    <td colspan="7">
-                        <div class="empty-state">
-                            <i class="bi bi-calendar-x"></i>
-                            <p>No <strong><?= $status_tab ?></strong> reservations found.</p>
-                        </div>
-                    </td>
-                </tr>
-                <?php endif; ?>
+                <?php endwhile; mysqli_data_seek($res, 0); ?>
                 </tbody>
             </table>
-        </div>
+
+            <!-- Mobile Card View -->
+            <div class="card-view">
+                <?php while ($row = mysqli_fetch_assoc($res)): 
+                    $id = $row['id'];
+                    $items_q  = mysqli_query($con, "SELECT ri.requested_quantity, i.item_name FROM lab_reservation_items ri JOIN lab_items i ON ri.item_id = i.id WHERE ri.reservation_id = $id");
+                    $items_str = '';
+                    while ($itm = mysqli_fetch_assoc($items_q)) $items_str .= '· '.htmlspecialchars($itm['item_name']).' (x'.$itm['requested_quantity'].') ';
+                ?>
+                <div class="res-card">
+                    <div class="card-header">
+                        <span class="td-no">#<?= htmlspecialchars($row['reservation_no']) ?></span>
+                        <span class="status-badge status-<?= htmlspecialchars($row['status']) ?>"><?= htmlspecialchars($row['status']) ?></span>
+                    </div>
+                    <div class="card-body-row">
+                        <div class="card-label">Student</div>
+                        <div class="card-value"><?= htmlspecialchars($row['user_name']) ?> (<?= htmlspecialchars($row['course_section']) ?>)</div>
+                    </div>
+                    <div class="card-body-row">
+                        <div class="card-label">Schedule</div>
+                        <div class="card-value"><?= date('M d, Y', strtotime($row['reservation_date'])) ?> @ <?= htmlspecialchars($row['reservation_time']) ?></div>
+                    </div>
+                    <div class="card-body-row">
+                        <div class="card-label">Items</div>
+                        <div class="card-value" style="font-size:0.75rem; color:var(--text-2);"><?= $items_str ?: 'None' ?></div>
+                    </div>
+                    <div style="margin-top:10px;">
+                        <?php if ($status_tab == 'Pending'): ?>
+                            <button class="act-btn act-btn-review" onclick="viewReservation(<?= $id ?>, '<?= $row['reservation_no'] ?>', true)">Review Request</button>
+                        <?php else: ?>
+                            <button class="act-btn act-btn-view" onclick="viewReservation(<?= $id ?>, '<?= $row['reservation_no'] ?>', false)">View Details</button>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <?php endwhile; ?>
+            </div>
+
+        <?php else: ?>
+            <div class="empty-state">
+                <i class="bi bi-calendar-x"></i>
+                <p>No <strong><?= $status_tab ?></strong> requisitions found.</p>
+            </div>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -399,7 +464,7 @@ body, .main-content, #main-content {
         <div class="modal-content">
             <div class="modal-header-custom">
                 <div class="modal-header-icon"><i class="bi bi-card-checklist" id="modalIcon"></i></div>
-                <div class="modal-header-title" id="modalTitleText">Reservation Details</div>
+                <div class="modal-header-title" id="modalTitleText">Requisition Details</div>
                 <div style="font-size:.82rem;color:var(--red);font-weight:700;margin-right:8px;" id="approveResNo"></div>
                 <button class="modal-close-btn" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i></button>
             </div>
@@ -413,7 +478,7 @@ body, .main-content, #main-content {
 <script>
 function viewReservation(id, resNo, isPending) {
     document.getElementById('approveResNo').textContent = '#' + resNo;
-    document.getElementById('modalTitleText').textContent = isPending ? 'Approve Reservation' : 'Reservation Details';
+    document.getElementById('modalTitleText').textContent = isPending ? 'Approve Requisition' : 'Requisition Details';
     document.getElementById('modalIcon').className = isPending ? 'bi bi-card-checklist' : 'bi bi-card-text';
 
     let modal = new bootstrap.Modal(document.getElementById('approvalModal'));
@@ -439,7 +504,7 @@ function submitApproval(e) {
 }
 
 function updateStatus(id, newStatus) {
-    const labels = { Ongoing:'Set as Ongoing?', Completed:'Mark as Completed?', Denied:'Deny this reservation?' };
+    const labels = { Ongoing:'Set as Ongoing?', Completed:'Mark as Completed?', Denied:'Deny this requisition?' };
     Swal.fire({
         title: labels[newStatus] || `Mark as ${newStatus}?`,
         icon: newStatus === 'Denied' ? 'warning' : 'question',

@@ -44,7 +44,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['item_id'], $_POST['chan
         $con->query("UPDATE lab_items SET total_quantity=$new_tot, available_quantity=$new_avail WHERE id=$item_id");
         
         $admin_id = $_SESSION['adminId'] ?? 1;
-        $stmt = $con->prepare("INSERT INTO lab_item_logs (item_id, change_type, quantity, remarks, performed_by) VALUES (?, ?, ?, ?, ?)");
+        $stmt = $con->prepare("INSERT INTO lab_item_logs (item_id, change_type, quantity_change, remarks, performed_by) VALUES (?, ?, ?, ?, ?)");
         $stmt->bind_param("isisi", $item_id, $type, $change, $remarks, $admin_id);
         $stmt->execute();
         

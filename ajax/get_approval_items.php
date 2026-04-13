@@ -5,11 +5,11 @@
  * Shows each item with: item name, requested qty (read-only),
  * approved qty (editable, defaults to requested), available stock (read-only).
  */
-require('../header.php'); // pulls in $con
+require_once('../config.php'); // pulls in $con
 
 $id = (int) ($_GET['id'] ?? 0);
 if (!$id) {
-    echo '<p class="text-danger">Invalid reservation.</p>';
+    echo '<p class="text-danger">Invalid requisition.</p>';
     exit;
 }
 
@@ -17,7 +17,7 @@ if (!$id) {
 $res = mysqli_query($con, "SELECT * FROM lab_reservations WHERE id = $id");
 $r = mysqli_fetch_assoc($res);
 if (!$r) {
-    echo '<p class="text-danger">Reservation not found.</p>';
+    echo '<p class="text-danger">Requisition not found.</p>';
     exit;
 }
 
@@ -26,6 +26,7 @@ $items_q = mysqli_query($con, "
     SELECT ri.id        AS res_item_id,
            ri.item_id,
            ri.requested_quantity,
+           ri.approved_quantity,
            i.item_name,
            i.available_quantity
     FROM lab_reservation_items ri
@@ -242,7 +243,7 @@ while ($row = mysqli_fetch_assoc($items_q))
 <div class="info-grid">
     <div class="info-block">
         <div class="info-block-label">Student</div>
-        <div class="info-block-value"><?= htmlspecialchars($r['user_name']) ?></div>
+        <div class="info-block-value"><?= htmlspecialchars($r['user_name'] ?? '') ?></div>
     </div>
     <div class="info-block">
         <div class="info-block-label">Subject / Station</div>
@@ -265,10 +266,13 @@ while ($row = mysqli_fetch_assoc($items_q))
 </div>
 
 <?php if (empty($items)): ?>
-    <p style="color:var(--text-3);font-size:.84rem;">No items requested for this reservation.</p>
+    <p style="color:var(--text-3);font-size:.84rem;">No items requested for this requisition.</p>
 <?php else: ?>
 
-    <div class="items-section-label">Requested Items — Set Approved Quantities</div>
+<?php 
+$is_pending = strtolower($r['status']) === 'pending'; 
+?>
+    <div class="items-section-label">Requested Items <?= $is_pending ? '— Set Approved Quantities' : '— Approved Quantities' ?></div>
 
     <form id="approvalForm" onsubmit="submitApproval(event)">
         <input type="hidden" name="reservation_id" value="<?= $id ?>">
@@ -278,7 +282,7 @@ while ($row = mysqli_fetch_assoc($items_q))
                 <tr>
                     <th>Item</th>
                     <th class="center">Requested</th>
-                    <th class="center">Available Stock</th>
+                    <th class="center"><?= $is_pending ? 'Available Stock' : '' ?></th>
                     <th class="center">Approved Qty</th>
                 </tr>
             </thead>
@@ -286,6 +290,7 @@ while ($row = mysqli_fetch_assoc($items_q))
                 <?php foreach ($items as $item):
                     $stock = (int) $item['available_quantity'];
                     $req = (int) $item['requested_quantity'];
+                    $appr = (int) ($item['approved_quantity'] ?? 0);
                     $max = min($req, $stock); // can't approve more than requested OR more than stock
                     $low = $stock <= 5;
                     ?>
@@ -295,25 +300,33 @@ while ($row = mysqli_fetch_assoc($items_q))
                             <span class="qty-pill qty-requested"><?= $req ?></span>
                         </td>
                         <td style="text-align:center;">
-                            <span class="qty-pill qty-stock <?= $low ? 'low' : '' ?>">
-                                <?= $stock ?>
-                                <?= $low ? ' ⚠' : '' ?>
-                            </span>
+                            <?php if ($is_pending): ?>
+                                <span class="qty-pill qty-stock <?= $low ? 'low' : '' ?>">
+                                    <?= $stock ?>
+                                    <?= $low ? ' ⚠' : '' ?>
+                                </span>
+                            <?php else: ?>
+                                <span style="color:var(--text-3);">-</span>
+                            <?php endif; ?>
                         </td>
                         <td style="text-align:center;">
-                            <div class="approved-qty-wrap" style="justify-content:center;">
-                                <div>
-                                    <input type="number" class="approved-qty-input" name="approved[<?= $item['res_item_id'] ?>]"
-                                        data-item-id="<?= $item['res_item_id'] ?>" data-max-req="<?= $req ?>"
-                                        data-max-stock="<?= $stock ?>" value="<?= $max ?>" min="0" max="<?= $max ?>"
-                                        oninput="validateQty(this)">
-                                    <div class="qty-error-msg" id="err-<?= $item['res_item_id'] ?>"></div>
+                            <?php if ($is_pending): ?>
+                                <div class="approved-qty-wrap" style="justify-content:center;">
+                                    <div>
+                                        <input type="number" class="approved-qty-input" name="approved[<?= $item['res_item_id'] ?>]"
+                                            data-item-id="<?= $item['res_item_id'] ?>" data-max-req="<?= $req ?>"
+                                            data-max-stock="<?= $stock ?>" value="<?= $max ?>" min="0" max="<?= $max ?>"
+                                            oninput="validateQty(this)">
+                                        <div class="qty-error-msg" id="err-<?= $item['res_item_id'] ?>"></div>
+                                    </div>
                                 </div>
-                            </div>
-                            <?php if ($stock === 0): ?>
-                                <div style="font-size:.68rem;color:var(--red);margin-top:4px;font-weight:600;">Out of stock</div>
-                            <?php elseif ($stock < $req): ?>
-                                <div style="font-size:.68rem;color:#92400e;margin-top:4px;">Max approvable: <?= $stock ?></div>
+                                <?php if ($stock === 0): ?>
+                                    <div style="font-size:.68rem;color:var(--red);margin-top:4px;font-weight:600;">Out of stock</div>
+                                <?php elseif ($stock < $req): ?>
+                                    <div style="font-size:.68rem;color:#92400e;margin-top:4px;">Max approvable: <?= $stock ?></div>
+                                <?php endif; ?>
+                            <?php else: ?>
+                                <span class="qty-pill" style="background:var(--surface-3);color:var(--text);"><?= $appr ?></span>
                             <?php endif; ?>
                         </td>
                     </tr>
@@ -322,13 +335,18 @@ while ($row = mysqli_fetch_assoc($items_q))
         </table>
 
         <div class="modal-actions">
-            <button type="button" class="btn-modal-cancel" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn-modal-approve" id="approveSubmitBtn">
-                <i class="bi bi-check-lg"></i> Approve Reservation
-            </button>
+            <?php if ($is_pending): ?>
+                <button type="button" class="btn-modal-cancel" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn-modal-approve" id="approveSubmitBtn">
+                    <i class="bi bi-check-lg"></i> Approve Requisition
+                </button>
+            <?php else: ?>
+                <button type="button" class="btn-modal-cancel" data-bs-dismiss="modal">Close</button>
+            <?php endif; ?>
         </div>
     </form>
 
+    <?php if ($is_pending): ?>
     <script>
         function validateQty(input) {
             const maxReq = parseInt(input.dataset.maxReq);
@@ -360,8 +378,8 @@ while ($row = mysqli_fetch_assoc($items_q))
             document.getElementById('approveSubmitBtn').disabled = hasErrors;
         }
 
-        // Run validation on all fields once on load (in case stock < requested for any item)
         document.querySelectorAll('.approved-qty-input').forEach(validateQty);
     </script>
+    <?php endif; ?>
 
 <?php endif; ?>

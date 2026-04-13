@@ -869,7 +869,7 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
      PAGE HEADER
 ════════════════════════════════════ -->
 <div class="reserve-header">
-    <h1>Lab Reservation</h1>
+    <h1>Lab Requisition</h1>
     <p>Fill in your details, pick your schedule, then select the tools you need.</p>
 </div>
 
@@ -1020,7 +1020,7 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
         <!-- Submit -->
         <button class="btn-submit" onclick="submitReservation()">
             <i class="bi bi-check2-circle"></i>
-            Submit Reservation
+            Submit Requisition
         </button>
 
         <p style="font-size:0.75rem;color:var(--muted);text-align:center;margin:0;">
@@ -1049,7 +1049,7 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
     <div class="drawer-title">Review Selection</div>
     <div id="drawer-list"></div>
     <button class="btn-submit w-100 mt-4" onclick="submitReservation()">
-        <i class="bi bi-send-check me-2"></i> Confirm My Reservation
+        <i class="bi bi-send-check me-2"></i> Confirm My Requisition
     </button>
 </div>
 
@@ -1243,7 +1243,7 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
                             <span class="badge-avail${allOos ? ' zero' : ''}">${items.length} Variants</span>
                             <span style="font-size:.72rem;color:var(--muted);margin-left:4px;">${totalAvail} total available</span>
                         </div>
-                        <button class="btn-add" onclick="openVariantModal('${base.replace(/'/g, "\\'")}', ${catId})">
+                        <button class="btn-add" onclick="openVariantModal('${base.replace(/'/g, "\\'").replace(/"/g, '&quot;')}', ${catId})">
                             <i class="bi bi-list-ul"></i> Select Size
                         </button>
                     </div>
@@ -1255,7 +1255,7 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
                 const avail = parseInt(item.available_quantity);
                 const oos = avail <= 0;
                 const inCart = labCart[item.id] != null;
-                const safe = item.item_name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                const safe = item.item_name.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
                 return `
                 <div class="item-card${oos ? ' out-of-stock' : ''}" id="item-card-${item.id}">
                     <img src="${img}" alt="${item.item_name}" onerror="this.src='assets/images/placeholder.png'">
@@ -1302,7 +1302,7 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
             const avail = parseInt(v.available_quantity);
             const inCart = labCart[v.id] != null;
             const oos = avail <= 0;
-            const safe = v.item_name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+            const safe = v.item_name.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
             // For the title in the modal, show the part that makes it unique (the size/spec)
             let uniquePart = v.item_name;
@@ -1456,6 +1456,23 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
     }
 
     function submitReservation() {
+        const submitBtns = document.querySelectorAll('.btn-submit');
+        const enableBtns = () => {
+            submitBtns.forEach(btn => {
+                btn.disabled = false;
+                if(btn.dataset.originalHTML) btn.innerHTML = btn.dataset.originalHTML;
+            });
+        };
+
+        // Disable to prevent multiple clicks
+        submitBtns.forEach(btn => {
+            if(!btn.disabled) {
+                btn.dataset.originalHTML = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Processing...';
+            }
+        });
+
         const fields = [
             { id: 'req_name', label: 'Full Name' },
             { id: 'req_email', label: 'Email Address' },
@@ -1475,12 +1492,14 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
                 el.style.borderColor = 'var(--red)';
                 setTimeout(() => el.style.borderColor = '', 2000);
                 showAlert(`Please fill in: ${f.label}`, 'error');
+                enableBtns();
                 return;
             }
         }
 
         if (!Object.keys(labCart).length) {
-            showAlert('Please add at least one item to your reservation.', 'error');
+            showAlert('Please add at least one item to your requisition.', 'error');
+            enableBtns();
             return;
         }
 
@@ -1515,8 +1534,19 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
                 }
             })
             .then(res => {
+                enableBtns();
                 if (res.status === 'success') {
-                    showAlert('Reservation submitted! You will be notified once approved.', 'success');
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Requisition Submitted!',
+                            text: 'Your request has been sent to the lab custodian for review. You can track its status in the My Requisitions page.',
+                            confirmButtonColor: '#C0392B'
+                        });
+                    } else {
+                        showAlert('Requisition submitted! You will be notified once approved.', 'success');
+                    }
+                    
                     labCart = {};
                     sessionStorage.removeItem('reserve_form_data');
                     sessionStorage.removeItem('reserve_cart');
@@ -1535,6 +1565,7 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
                 }
             })
             .catch((err) => {
+                enableBtns();
                 console.error(err);
                 showAlert('Submission failed: ' + err.message, 'error');
             });

@@ -8,7 +8,7 @@ $logo_url = BASE_URL . '/assets/images/logo.png';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BSU Laboratory Asset Management System</title>
+    <title>BSU Kitchen Laboratory Requisition System (KLRS)</title>
     <?php include __DIR__ . '/link.php'; ?>
 </head>
 <body class="bg-light">
@@ -18,7 +18,7 @@ $logo_url = BASE_URL . '/assets/images/logo.png';
         <div class="container-fluid">
             <a class="navbar-brand me-5 fw-bold fs-4 text-danger d-flex align-items-center" href="<?= BASE_URL ?>/index.php">
                 <img src="<?= $logo_url ?>" alt="BSU Logo" width="35" height="35" class="me-2" onerror="this.src='https://via.placeholder.com/35x35/b71c1c/fff?text=BSU'">
-                <span>LAMS</span>
+                <span>KLRS</span>
             </a>
             <button class="navbar-toggler shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -29,10 +29,10 @@ $logo_url = BASE_URL . '/assets/images/logo.png';
                         <a class="nav-link <?= $current_page == 'index.php' ? 'active text-danger' : 'text-dark' ?> fw-medium me-2" href="<?= BASE_URL ?>/index.php">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link <?= $current_page == 'reserve.php' ? 'active text-danger' : 'text-dark' ?> fw-medium me-2" href="<?= BASE_URL ?>/reserve.php">Make Reservation</a>
+                        <a class="nav-link <?= $current_page == 'reserve.php' ? 'active text-danger' : 'text-dark' ?> fw-medium me-2" href="<?= BASE_URL ?>/reserve.php">Request Equipment</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link <?= $current_page == 'my_reservations.php' ? 'active text-danger' : 'text-dark' ?> fw-medium" href="<?= BASE_URL ?>/my_reservations.php">My Reservations</a>
+                        <a class="nav-link <?= $current_page == 'my_reservations.php' ? 'active text-danger' : 'text-dark' ?> fw-medium" href="<?= BASE_URL ?>/my_reservations.php">My Requisitions</a>
                     </li>
                 </ul>
                 <div class="d-flex">
