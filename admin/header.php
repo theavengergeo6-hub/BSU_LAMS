@@ -104,6 +104,8 @@ $current_page = basename($_SERVER['PHP_SELF']);
             min-height: 100vh;
             background: #f8f9fa;
             transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
         }
         .top-bar {
             background: white;

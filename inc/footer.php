@@ -26,6 +26,39 @@
 <h6 class="text-center bg-danger text-white m-0 p-3">Designed and Developed for BSU - All Rights Reserved</h6>
 
 <script src="<?= BASE_URL ?>/assets/js/main.js?v=<?= time() ?>"></script>
+
+<!-- Back to Top Button -->
+<button type="button" id="btn-back-to-top" title="Back to Top">
+    <i class="bi bi-arrow-up"></i>
+</button>
+
+<script>
+    // Get the button
+    const mybutton = document.getElementById("btn-back-to-top");
+
+    if (mybutton) {
+        // When the user scrolls down 100px from the top of the document, show the button
+        window.addEventListener("scroll", () => {
+            const scrollPos = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+            if (scrollPos > 100) {
+                mybutton.style.setProperty('display', 'flex', 'important');
+            } else {
+                mybutton.style.setProperty('display', 'none', 'important');
+            }
+        });
+
+        // When the user clicks on the button, scroll to the top of the document
+        mybutton.addEventListener("click", () => {
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth"
+            });
+        });
+    }
+</script>
+
+
 </body>
+
 
 </html>

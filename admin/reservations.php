@@ -60,6 +60,40 @@ body, .main-content, #main-content {
     color: var(--text); margin: 0; line-height: 1.1;
 }
 
+/* ── Search bar ── */
+.search-wrap {
+    position: relative;
+    min-width: 240px;
+    flex-shrink: 0;
+    animation: fadeUp .5s ease forwards .04s;
+    opacity: 0;
+}
+.search-wrap i {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    color: var(--text-3); font-size: 0.9rem; pointer-events: none;
+}
+.search-input {
+    width: 100%;
+    padding: 9px 14px 9px 36px;
+    border-radius: 9px;
+    border: 1px solid var(--border-2);
+    background: var(--surface);
+    font-family: 'Sora', sans-serif;
+    font-size: 0.82rem;
+    color: var(--text);
+    transition: border-color .2s, box-shadow .2s;
+    outline: none;
+}
+.search-input::placeholder { color: var(--text-3); }
+.search-input:focus {
+    border-color: var(--red);
+    box-shadow: 0 0 0 3px var(--red-glow);
+}
+.no-results-row td {
+    text-align: center; padding: 40px 20px;
+    color: var(--text-3); font-size: 0.85rem;
+}
+
 /* ── Status tabs ── */
 .res-tabs {
     display: flex; gap: 4px; flex-wrap: wrap;
@@ -308,6 +342,10 @@ body, .main-content, #main-content {
             <div class="page-eyebrow">Admin Panel</div>
             <h1 class="page-title">Manage Requisitions</h1>
         </div>
+        <div class="search-wrap">
+            <i class="bi bi-search"></i>
+            <input type="text" id="searchInput" class="search-input" placeholder="Search by student name…" oninput="filterRows()" autocomplete="off">
+        </div>
     </div>
 
     <!-- Tabs -->
@@ -329,7 +367,7 @@ body, .main-content, #main-content {
     <!-- Main Container -->
     <div class="res-table-container">
         <?php
-        $q   = "SELECT * FROM lab_reservations WHERE status = '$status_tab' ORDER BY reservation_date ASC, reservation_time ASC";
+        $q   = "SELECT * FROM lab_reservations WHERE status = '$status_tab' ORDER BY id DESC";
         $res = mysqli_query($con, $q);
 
         if (mysqli_num_rows($res) > 0): ?>
@@ -347,7 +385,7 @@ body, .main-content, #main-content {
                         <th class="center act-col">Actions</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="resTableBody">
                 <?php 
                 while ($row = mysqli_fetch_assoc($res)): 
                     $id = $row['id'];
@@ -410,11 +448,12 @@ body, .main-content, #main-content {
                     </td>
                 </tr>
                 <?php endwhile; mysqli_data_seek($res, 0); ?>
+                <tr class="no-results-row" id="noResultsRow" style="display:none;"><td colspan="7"><i class="bi bi-search" style="font-size:1.5rem;display:block;margin-bottom:8px;opacity:.3;"></i>No results match your search.</td></tr>
                 </tbody>
             </table>
 
             <!-- Mobile Card View -->
-            <div class="card-view">
+            <div class="card-view" id="cardView">
                 <?php while ($row = mysqli_fetch_assoc($res)): 
                     $id = $row['id'];
                     $items_q  = mysqli_query($con, "SELECT ri.requested_quantity, i.item_name FROM lab_reservation_items ri JOIN lab_items i ON ri.item_id = i.id WHERE ri.reservation_id = $id");
@@ -476,6 +515,37 @@ body, .main-content, #main-content {
 </div>
 
 <script>
+function filterRows() {
+    const q = document.getElementById('searchInput').value.trim().toLowerCase();
+
+    // --- Desktop table ---
+    const tbody = document.getElementById('resTableBody');
+    if (tbody) {
+        const rows = tbody.querySelectorAll('tr:not(#noResultsRow)');
+        let visible = 0;
+        rows.forEach(tr => {
+            const nameTd = tr.querySelector('.td-name');
+            const name   = nameTd ? nameTd.textContent.toLowerCase() : '';
+            const show   = !q || name.includes(q);
+            tr.style.display = show ? '' : 'none';
+            if (show) visible++;
+        });
+        const noRow = document.getElementById('noResultsRow');
+        if (noRow) noRow.style.display = (visible === 0 && q) ? '' : 'none';
+    }
+
+    // --- Mobile cards ---
+    const cardView = document.getElementById('cardView');
+    if (cardView) {
+        const cards = cardView.querySelectorAll('.res-card');
+        cards.forEach(card => {
+            const nameEl = card.querySelector('.card-value');
+            const name   = nameEl ? nameEl.textContent.toLowerCase() : '';
+            card.style.display = (!q || name.includes(q)) ? '' : 'none';
+        });
+    }
+}
+
 function viewReservation(id, resNo, isPending) {
     document.getElementById('approveResNo').textContent = '#' + resNo;
     document.getElementById('modalTitleText').textContent = isPending ? 'Approve Requisition' : 'Requisition Details';
@@ -529,5 +599,6 @@ function updateStatus(id, newStatus) {
     });
 }
 </script>
+
 
 <?php require('footer.php'); ?>
