@@ -88,57 +88,98 @@ $pdf->Cell(35, 5, $r['reservation_time'], 0, 0, 'L');
 $pdf->SetXY(164, 71.5);
 $pdf->Cell(40, 5, date('M d, Y', strtotime($r['reservation_date'])), 0, 0, 'L');
 
-// ── Table Items ──────────────────────────────────────────────────────────────
-$startY = 93.8; // Increased from 92.8 to prevent touching the top line
-$rowHeight = 6.45;
-$maxRows = 24;   // Max rows that fit on one page template
+// ── Layout Control (Edit these to fine-tune) ──────────────────────────────────
+$debug = false;       // Set to true to draw red boxes around all fields
+$rowHeight = 5.30;    // YOUR NEW GAP: 110.7 - 105.4 = 5.3
+$startY = 94.8;       // YOUR NEW START: 105.4 - (2 * 5.3) = 94.8
+$maxRows = 26;        // Increased to fill all 26 rows of the form
 
+// Signature parameters
+$sigX = 134;          // Horizontal position for "Request By" name
+$sigY = 242.5;        // Vertical position for "Request By" name
+$sigW = 55;           // Width of the signature box area
+$sigH = 6;            // Height of the signature box area
+
+// ── Column Configuration (Adjust X and Width here) ───────────────────────────
+$colItem = ['x' => 13, 'w' => 38];
+$colQty = ['x' => 51, 'w' => 35];
+$colAppr = ['x' => 86, 'w' => 35];
+$colRet = ['x' => 121, 'w' => 32];
+$colRem = ['x' => 153, 'w' => 39];
+
+// ── Row Y-Coordinates ────────────────────────────────────────────────────────
+// This loop now automatically applies your 5.3 gap to every single row!
+$rowY = [];
+for ($i = 0; $i < $maxRows; $i++) {
+    $rowY[$i] = $startY + ($i * $rowHeight);
+}
+
+// ── Table Items ──────────────────────────────────────────────────────────────
 foreach ($items as $index => $item) {
     if ($index >= $maxRows)
-        break; // Limit to one page for now
+        break;
 
-    $currY = $startY + ($index * $rowHeight);
-    
-    // --- AUTO RESIZE LOGIC FOR ITEM NAME ---
+    $currY = $rowY[$index];
+
+    // --- ITEM NAME COLUMN ---
     $itemName = $item['item_name'];
     $fontSize = 9;
-    $colWidth = 38; // Width for Item Name column (approx from X=13 to X=51)
     $pdf->SetFont('helvetica', '', $fontSize);
-    
-    // Reduce font size if text is too wide
-    while ($pdf->GetStringWidth($itemName) > ($colWidth - 2) && $fontSize > 6) {
+
+    while ($pdf->GetStringWidth($itemName) > ($colItem['w'] - 2.5) && $fontSize > 5) {
         $fontSize -= 0.5;
         $pdf->SetFont('helvetica', '', $fontSize);
     }
 
-    // ITEM NAME (Centered now)
-    $pdf->SetXY(13, $currY);
-    $pdf->Cell($colWidth, $rowHeight, $itemName, 0, 0, 'C');
+    if ($debug) {
+        $pdf->SetDrawColor(255, 0, 0);
+        $pdf->Rect($colItem['x'], $currY, $colItem['w'], $rowHeight);
+    }
+    $pdf->SetXY($colItem['x'], $currY);
+    $pdf->Cell($colItem['w'], $rowHeight, $itemName, 0, 0, 'C');
 
-    // Reset font for quantities
+    // --- OTHER COLUMNS ---
     $pdf->SetFont('helvetica', '', 9);
 
-    // REQUEST NUMBER (Using requested_quantity)
-    $pdf->SetXY(51, $currY);
-    $pdf->Cell(35, $rowHeight, $item['requested_quantity'], 0, 0, 'C');
+    // REQUEST NUMBER
+    if ($debug)
+        $pdf->Rect($colQty['x'], $currY, $colQty['w'], $rowHeight);
+    $pdf->SetXY($colQty['x'], $currY);
+    $pdf->Cell($colQty['w'], $rowHeight, $item['requested_quantity'], 0, 0, 'C');
 
-    // REQUEST ISSUED (Using approved_quantity)
-    $pdf->SetXY(86, $currY);
-    $pdf->Cell(35, $rowHeight, $item['approved_quantity'], 0, 0, 'C');
+    // REQUEST ISSUED
+    if ($debug)
+        $pdf->Rect($colAppr['x'], $currY, $colAppr['w'], $rowHeight);
+    $pdf->SetXY($colAppr['x'], $currY);
+    $pdf->Cell($colAppr['w'], $rowHeight, $item['approved_quantity'], 0, 0, 'C');
 
-    // RETURNED ITEM (Leave blank or system can't track yet)
-    $pdf->SetXY(121, $currY);
-    $pdf->Cell(32, $rowHeight, '', 0, 0, 'C');
+    // RETURNED ITEM
+    if ($debug)
+        $pdf->Rect($colRet['x'], $currY, $colRet['w'], $rowHeight);
+    $pdf->SetXY($colRet['x'], $currY);
+    $pdf->Cell($colRet['w'], $rowHeight, '', 0, 0, 'C');
 
-    // REMARKS (Optional, showing unit for now or leave blank)
-    $pdf->SetXY(153, $currY);
-    $pdf->Cell(39, $rowHeight, '', 0, 0, 'C');
+    // REMARKS
+    if ($debug)
+        $pdf->Rect($colRem['x'], $currY, $colRem['w'], $rowHeight);
+    $pdf->SetXY($colRem['x'], $currY);
+    $pdf->Cell($colRem['w'], $rowHeight, '', 0, 0, 'C');
 }
 
 // ── Signature/Borrower ───────────────────────────────────────────────────────
 $pdf->SetFont('helvetica', 'B', 10);
-$pdf->SetXY(140, 245);
-$pdf->Cell(52, 5, strtoupper($r['user_name']), 0, 0, 'C');
+if ($debug) {
+    $pdf->SetDrawColor(255, 0, 0);
+    $pdf->Rect($sigX, $sigY, $sigW, $sigH);
+}
+$pdf->SetXY($sigX, $sigY);
+// Auto-resize for long signature names too!
+$sigFontSize = 10;
+while ($pdf->GetStringWidth(strtoupper($r['user_name'])) > ($sigW - 1) && $sigFontSize > 7) {
+    $sigFontSize -= 0.5;
+    $pdf->SetFont('helvetica', 'B', $sigFontSize);
+}
+$pdf->Cell($sigW, $sigH, strtoupper($r['user_name']), 0, 0, 'C');
 
 // ══════════════════════════════════════════════════════════════════════════════
 //  Output

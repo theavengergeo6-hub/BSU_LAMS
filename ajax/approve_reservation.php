@@ -42,6 +42,12 @@ if (strtolower($reservation['status']) !== 'pending') {
     exit;
 }
 
+// ── Fetch reservation date & time for time-slot validation ───────────────────
+$res_info_q = mysqli_query($con, "SELECT reservation_date, reservation_time FROM lab_reservations WHERE id = $reservation_id");
+$res_info = mysqli_fetch_assoc($res_info_q);
+$res_date = $res_info['reservation_date'];
+$res_time = $res_info['reservation_time'];
+
 // ── Validate ALL items before touching the database ──────────────────────────
 $validated = [];
 foreach ($approved as $res_item_id => $qty) {
@@ -51,10 +57,21 @@ foreach ($approved as $res_item_id => $qty) {
     if ($res_item_id <= 0)
         continue;
 
-    // Fetch the reservation item + current stock in one query
+    // Fetch the reservation item + total stock + how many are already committed
+    // for the SAME date & time slot (by other Approved/Ongoing reservations)
     $item_q = mysqli_query($con, "
         SELECT ri.id, ri.item_id, ri.requested_quantity,
-               i.item_name, i.available_quantity
+               i.item_name, i.total_quantity,
+               COALESCE((
+                   SELECT SUM(ri2.approved_quantity)
+                   FROM lab_reservation_items ri2
+                   JOIN lab_reservations r2 ON ri2.reservation_id = r2.id
+                   WHERE ri2.item_id = i.id
+                     AND r2.reservation_date = '$res_date'
+                     AND r2.reservation_time = '$res_time'
+                     AND r2.status IN ('Approved', 'Ongoing')
+                     AND r2.id != $reservation_id
+               ), 0) AS already_committed
         FROM lab_reservation_items ri
         JOIN lab_items i ON ri.item_id = i.id
         WHERE ri.id = $res_item_id
@@ -67,8 +84,10 @@ foreach ($approved as $res_item_id => $qty) {
         exit;
     }
 
-    $requested = (int) $item['requested_quantity'];
-    $stock = (int) $item['available_quantity'];
+    $requested         = (int) $item['requested_quantity'];
+    $total             = (int) $item['total_quantity'];
+    $already_committed = (int) $item['already_committed'];
+    $time_slot_avail   = $total - $already_committed;
 
     if ($qty < 0) {
         echo json_encode(['status' => 'error', 'message' => "Approved quantity for '{$item['item_name']}' cannot be negative."]);
@@ -78,16 +97,16 @@ foreach ($approved as $res_item_id => $qty) {
         echo json_encode(['status' => 'error', 'message' => "Approved quantity for '{$item['item_name']}' ($qty) exceeds requested quantity ($requested)."]);
         exit;
     }
-    if ($qty > $stock) {
-        echo json_encode(['status' => 'error', 'message' => "Approved quantity for '{$item['item_name']}' ($qty) exceeds available stock ($stock)."]);
+    if ($qty > $time_slot_avail) {
+        echo json_encode(['status' => 'error', 'message' => "Only $time_slot_avail of '{$item['item_name']}' available for this time slot ($res_time on $res_date). {$already_committed} already committed to another group."]);
         exit;
     }
 
     $validated[] = [
         'res_item_id' => $res_item_id,
-        'item_id' => (int) $item['item_id'],
-        'approved_qty' => $qty,
-        'item_name' => $item['item_name'],
+        'item_id'     => (int) $item['item_id'],
+        'approved_qty'=> $qty,
+        'item_name'   => $item['item_name'],
     ];
 }
 

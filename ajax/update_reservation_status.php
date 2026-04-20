@@ -24,8 +24,10 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id'], $_POST['status'])
         $con->query("UPDATE lab_reservations SET status='$new_status' WHERE id=$id");
         $admin_id = $_SESSION['adminId'] ?? 1;
         
-        // If completed or denied (from approved/ongoing stage), return items to inventory
-        if ( (strtolower($new_status) == 'completed' || strtolower($new_status) == 'denied') && in_array(strtolower($old_status), ['approved', 'ongoing', 'pending']) ) 
+        // Return stock only if items were actually deducted (Approved or Ongoing).
+        // Pending reservations never deduct stock, so never return from them.
+        if ( (strtolower($new_status) == 'completed' || strtolower($new_status) == 'denied') &&
+             in_array(strtolower($old_status), ['approved', 'ongoing']) ) 
         {
             $items_q = $con->query("SELECT item_id, approved_quantity FROM lab_reservation_items WHERE reservation_id=$id AND approved_quantity > 0");
             while($item = $items_q->fetch_assoc()) {

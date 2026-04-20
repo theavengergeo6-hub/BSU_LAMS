@@ -928,11 +928,11 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
                     </div>
                     <div class="field">
                         <label>Date <span class="req">*</span></label>
-                        <input type="date" id="req_date" min="<?= date('Y-m-d') ?>" onchange="saveFormData()">
+                        <input type="date" id="req_date" min="<?= date('Y-m-d') ?>" onchange="saveFormData(); reloadItemsForTimeslot();">
                     </div>
                     <div class="field">
                         <label>Time (7AM – 5PM) <span class="req">*</span></label>
-                        <select id="req_time" onchange="saveFormData()">
+                        <select id="req_time" onchange="saveFormData(); reloadItemsForTimeslot();">
                             <option value="" disabled selected>Select time slot</option>
                             <?php
                             $s = strtotime('07:00');
@@ -953,6 +953,10 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
             <div class="r-card-header">
                 <div class="icon"><i class="bi bi-box-seam"></i></div>
                 <h2>Select Items to Borrow</h2>
+            </div>
+            <!-- Time-slot notice -->
+            <div id="timeslot-notice" style="margin:0 24px 0;padding:10px 14px;background:#fff8e1;border-left:4px solid #f9a825;border-radius:6px;font-size:0.83rem;color:#795548;display:none;">
+                <i class="bi bi-clock me-1"></i> Availability updates automatically based on your selected <strong>date and time</strong>.
             </div>
 
             <!-- Category tabs -->
@@ -1108,11 +1112,17 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
         loadCategory(catId);
     }
 
-    // ── Load items via AJAX ───────────────────────────────
+    // ── Load items via AJAX (time-slot-aware) ────────────────────────────
     function loadCategory(catId) {
         if (loadedCats[catId]) return;
 
-        fetch(`ajax/get_items_by_category.php?category_id=${catId}`)
+        const date = document.getElementById('req_date')?.value || '';
+        const time = document.getElementById('req_time')?.value || '';
+        const params = new URLSearchParams({ category_id: catId });
+        if (date) params.append('date', date);
+        if (time) params.append('time', time);
+
+        fetch(`ajax/get_items_by_category.php?${params.toString()}`)
             .then(r => r.json())
             .then(data => {
                 catData[catId] = data;
@@ -1123,6 +1133,27 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
                 document.getElementById('items-pane-' + catId).innerHTML =
                     '<div class="items-loading" style="color:var(--red)"><i class="bi bi-exclamation-circle me-2"></i> Failed to load items.</div>';
             });
+    }
+
+    // ── Reload all items when date or time changes ────────────────────────
+    function reloadItemsForTimeslot() {
+        const date = document.getElementById('req_date')?.value || '';
+        const time = document.getElementById('req_time')?.value || '';
+
+        // Show the timeslot notice once both are selected
+        const notice = document.getElementById('timeslot-notice');
+        if (notice) notice.style.display = (date && time) ? 'block' : 'none';
+
+        // Bust the item cache so every category reloads with fresh availability
+        loadedCats = {};
+        catData = {};
+
+        // Reload only the currently visible pane immediately
+        if (activeCatId) {
+            document.getElementById('items-pane-' + activeCatId).innerHTML =
+                '<div class="items-loading"><div class="spinner"></div> Updating availability…</div>';
+            loadCategory(activeCatId);
+        }
     }
 
     // ── Search ────────────────────────────────────────────
