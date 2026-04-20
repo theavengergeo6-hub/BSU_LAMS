@@ -237,6 +237,28 @@ while ($row = mysqli_fetch_assoc($items_q))
         opacity: .55;
         cursor: not-allowed;
     }
+
+    .btn-modal-print {
+        padding: 9px 22px;
+        border-radius: 8px;
+        font-family: 'Sora', sans-serif;
+        font-size: 0.82rem;
+        font-weight: 600;
+        background: #1e3a5f;
+        color: #fff;
+        border: 1px solid #1e3a5f;
+        cursor: pointer;
+        transition: all .15s;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        text-decoration: none;
+    }
+
+    .btn-modal-print:hover {
+        background: #1e40af;
+        color: #fff;
+    }
 </style>
 
 <!-- Reservation info -->
@@ -342,6 +364,9 @@ $is_pending = strtolower($r['status']) === 'pending';
                 </button>
             <?php else: ?>
                 <button type="button" class="btn-modal-cancel" data-bs-dismiss="modal">Close</button>
+                <a class="btn-modal-print" href="../admin/print_requisition.php?id=<?= $id ?>" target="_blank">
+                    <i class="bi bi-printer-fill"></i> Print Requisition Form
+                </a>
             <?php endif; ?>
         </div>
     </form>

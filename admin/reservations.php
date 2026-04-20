@@ -230,6 +230,8 @@ body, .main-content, #main-content {
 .act-btn-deny    { background: transparent; color: var(--red); border-color: rgba(192,57,43,.3); }
 .act-btn-deny:hover    { background: var(--red-soft); color: var(--red); }
 .act-btn-closed  { background: var(--surface-2); color: var(--text-3); border-color: var(--border); cursor: not-allowed; }
+.act-btn-print   { background: #1e3a5f; color: #fff; border-color: #1e3a5f; }
+.act-btn-print:hover   { background: #1e40af; color: #fff; }
 .act-col { min-width: 130px; }
 
 /* ── Empty state ── */
@@ -426,6 +428,9 @@ body, .main-content, #main-content {
                             <button class="act-btn act-btn-ongoing" onclick="updateStatus(<?= $id ?>, 'Ongoing')">
                                 <i class="bi bi-play-fill"></i> Set Ongoing
                             </button>
+                            <a class="act-btn act-btn-print" href="print_requisition.php?id=<?= $id ?>" target="_blank">
+                                <i class="bi bi-printer-fill"></i> Print Form
+                            </a>
                             <button class="act-btn act-btn-deny" onclick="updateStatus(<?= $id ?>, 'Denied')">
                                 <i class="bi bi-x-lg"></i> Deny
                             </button>
@@ -436,10 +441,16 @@ body, .main-content, #main-content {
                             <button class="act-btn act-btn-complete" onclick="updateStatus(<?= $id ?>, 'Completed')">
                                 <i class="bi bi-check-circle-fill"></i> Complete
                             </button>
+                            <a class="act-btn act-btn-print" href="print_requisition.php?id=<?= $id ?>" target="_blank">
+                                <i class="bi bi-printer-fill"></i> Print Form
+                            </a>
                         <?php else: ?>
                             <button class="act-btn act-btn-view" onclick="viewReservation(<?= $id ?>, '<?= $row['reservation_no'] ?>', false)">
                                 <i class="bi bi-eye"></i> View
                             </button>
+                            <a class="act-btn act-btn-print" href="print_requisition.php?id=<?= $id ?>" target="_blank">
+                                <i class="bi bi-printer-fill"></i> Print Form
+                            </a>
                             <button class="act-btn act-btn-closed" disabled>
                                 <i class="bi bi-lock"></i> Closed
                             </button>
@@ -482,6 +493,9 @@ body, .main-content, #main-content {
                             <button class="act-btn act-btn-review" onclick="viewReservation(<?= $id ?>, '<?= $row['reservation_no'] ?>', true)">Review Request</button>
                         <?php else: ?>
                             <button class="act-btn act-btn-view" onclick="viewReservation(<?= $id ?>, '<?= $row['reservation_no'] ?>', false)">View Details</button>
+                            <a class="act-btn act-btn-print" href="print_requisition.php?id=<?= $id ?>" target="_blank" style="margin-top:6px;">
+                                <i class="bi bi-printer-fill"></i> Print Form
+                            </a>
                         <?php endif; ?>
                     </div>
                 </div>
