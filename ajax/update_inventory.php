@@ -10,6 +10,8 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['item_id'], $_POST['chan
     $change = (int)$_POST['quantity_change'];
     $type = mysqli_real_escape_string($con, $_POST['change_type']);
     $remarks = mysqli_real_escape_string($con, $_POST['remarks']);
+    $is_disposal = isset($_POST['is_disposal']) ? (int)$_POST['is_disposal'] : 0;
+    $disposal_reason = isset($_POST['disposal_reason']) ? mysqli_real_escape_string($con, $_POST['disposal_reason']) : null;
     
     if($change <= 0) {
         echo json_encode(['status' => 'error', 'message' => 'Quantity must be greater than 0']);
@@ -34,6 +36,11 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['item_id'], $_POST['chan
     } else if($type == '+') {
         $new_tot = $curr['total_quantity'] + $change;
         $new_avail = $curr['available_quantity'] + $change;
+
+        if($new_tot > 9999) {
+            echo json_encode(['status'=>'error', 'message'=>"Total quantity cannot exceed 9999"]);
+            exit;
+        }
     } else {
         echo json_encode(['status'=>'error', 'message'=>"Invalid change type"]);
         exit;
@@ -44,8 +51,8 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['item_id'], $_POST['chan
         $con->query("UPDATE lab_items SET total_quantity=$new_tot, available_quantity=$new_avail WHERE id=$item_id");
         
         $admin_id = $_SESSION['adminId'] ?? 1;
-        $stmt = $con->prepare("INSERT INTO lab_item_logs (item_id, change_type, quantity_change, remarks, performed_by) VALUES (?, ?, ?, ?, ?)");
-        $stmt->bind_param("isisi", $item_id, $type, $change, $remarks, $admin_id);
+        $stmt = $con->prepare("INSERT INTO lab_item_logs (item_id, change_type, quantity_change, remarks, performed_by, is_disposal, disposal_reason) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("isisiis", $item_id, $type, $change, $remarks, $admin_id, $is_disposal, $disposal_reason);
         $stmt->execute();
         
         $con->commit();

@@ -21,14 +21,40 @@ if (!$r) {
     exit;
 }
 
-// Fetch items with available stock
+// Fetch items with DYNAMIC available stock for that specific time/date slot
+$res_date = $r['reservation_date'];
+$res_time = $r['reservation_time'];
+$res_end = $r['reservation_end_time'];
+
 $items_q = mysqli_query($con, "
-    SELECT ri.id        AS res_item_id,
+    SELECT ri.id AS res_item_id,
            ri.item_id,
            ri.requested_quantity,
            ri.approved_quantity,
            i.item_name,
-           i.available_quantity
+           i.unit,
+           -- Dynamic availability logic (matches student side)
+           GREATEST(0,
+               i.total_quantity - COALESCE((
+                   SELECT SUM(ri2.approved_quantity)
+                   FROM lab_reservation_items ri2
+                   JOIN lab_reservations r2 ON ri2.reservation_id = r2.id
+                   WHERE ri2.item_id = i.id
+                     AND r2.reservation_date = '$res_date'
+                     AND r2.id != $id
+                     AND (r2.stock_restored = 0 OR r2.stock_restored IS NULL)
+                     AND (
+                         (LOWER(r2.status) = 'ongoing' AND (r2.cooldown_until > NOW() OR r2.cooldown_until IS NULL))
+                         OR
+                         (LOWER(r2.status) = 'approved' AND 
+                             '$res_time:00' < DATE_FORMAT(DATE_ADD(STR_TO_DATE(r2.reservation_time, '%H:%i'), INTERVAL 3 HOUR), '%H:%i:%s') AND 
+                             '$res_end:00' > DATE_FORMAT(STR_TO_DATE(r2.reservation_time, '%H:%i'), '%H:%i:%s')
+                         )
+                         OR
+                         (LOWER(r2.status) = 'completed' AND r2.cooldown_until > NOW())
+                     )
+               ), 0)
+           ) AS available_quantity
     FROM lab_reservation_items ri
     JOIN lab_items i ON ri.item_id = i.id
     WHERE ri.reservation_id = $id

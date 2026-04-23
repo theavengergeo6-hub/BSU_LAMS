@@ -698,9 +698,14 @@ $categories = mysqli_query($con, 'SELECT * FROM lab_categories');
             <div class="page-eyebrow">Admin Panel</div>
             <h1 class="page-title">Manage Inventory</h1>
         </div>
-        <button class="btn-prim" data-bs-toggle="modal" data-bs-target="#addItemModal">
-            <i class="bi bi-plus-lg"></i> Add New Item
-        </button>
+        <div class="d-flex gap-2">
+            <a href="generate_disposal_report.php" target="_blank" class="btn-ghost" style="color:var(--text); border-color:var(--border-2);">
+                <i class="bi bi-file-earmark-pdf"></i> Disposal Report
+            </a>
+            <button class="btn-prim" data-bs-toggle="modal" data-bs-target="#addItemModal">
+                <i class="bi bi-plus-lg"></i> Add New Item
+            </button>
+        </div>
     </div>
 
     <!-- Filter bar -->
@@ -744,7 +749,8 @@ $categories = mysqli_query($con, 'SELECT * FROM lab_categories');
                         <th>Photo</th>
                         <th>Item Name</th>
                         <th>Category</th>
-                        <th class="center">Unit</th>
+                        <th class="center">Acq. Date</th>
+                        <th class="center">Age</th>
                         <th class="center">Total</th>
                         <th class="center">Available</th>
                         <th class="center">Actions</th>
@@ -770,7 +776,37 @@ $categories = mysqli_query($con, 'SELECT * FROM lab_categories');
                                 <td class="td-item-name"><?= htmlspecialchars($row['item_name']) ?></td>
                                 <td><span class="td-cat"><?= htmlspecialchars($row['cat_name']) ?></span></td>
                                 <td class="td-center" style="color:var(--text-2);font-size:.82rem;">
-                                    <?= htmlspecialchars($row['unit']) ?></td>
+                                    <?= $row['acquisition_date'] ? date('Y-m-d', strtotime($row['acquisition_date'])) : 'N/A' ?>
+                                </td>
+                                <td class="td-center">
+                                    <?php
+                                    if ($row['acquisition_date']) {
+                                        $ad = new DateTime($row['acquisition_date']);
+                                        $now = new DateTime();
+                                        $diff = $now->diff($ad);
+                                        $age_str = "";
+                                        if ($diff->y > 0) $age_str .= $diff->y . "y ";
+                                        if ($diff->m > 0) $age_str .= $diff->m . "m";
+                                        if (empty($age_str)) $age_str = "New";
+
+                                        $color = "text-success"; // < 1y
+                                        if ($diff->y >= 5) $color = "text-danger";
+                                        else if ($diff->y >= 3) $color = "text-warning"; // Using warning for orange-ish
+                                        else if ($diff->y >= 1) $color = "text-info"; // Customizing colors below or using standard BS
+
+                                        // Refined color coding based on 1.4 requirements
+                                        $style = "font-weight:700;";
+                                        if ($diff->y < 1) $style .= "color:#059669;"; // Green
+                                        else if ($diff->y < 3) $style .= "color:#d97706;"; // Yellow/Orange
+                                        else if ($diff->y < 5) $style .= "color:#ea580c;"; // Orange
+                                        else $style .= "color:#dc2626;"; // Red
+
+                                        echo "<span style='$style' title='{$diff->y} years, {$diff->m} months'>$age_str</span>";
+                                    } else {
+                                        echo "N/A";
+                                    }
+                                    ?>
+                                </td>
                                 <td class="td-center" style="font-weight:700;color:var(--text);"><?= $row['total_quantity'] ?>
                                 </td>
                                 <td class="td-center">
@@ -848,12 +884,16 @@ $categories = mysqli_query($con, 'SELECT * FROM lab_categories');
                     <div class="mrow">
                         <div class="mfield">
                             <label>Total Quantity *</label>
-                            <input type="number" name="total_quantity" min="1" placeholder="0" required>
+                            <input type="number" name="total_quantity" min="0" max="9999" placeholder="0" required>
                         </div>
                         <div class="mfield">
                             <label>Available Quantity *</label>
-                            <input type="number" name="available_quantity" min="0" placeholder="0" required>
+                            <input type="number" name="available_quantity" min="0" max="9999" placeholder="0" required>
                         </div>
+                    </div>
+                    <div class="mfield">
+                        <label>Acquisition Date *</label>
+                        <input type="date" name="acquisition_date" value="<?= date('Y-m-d') ?>" required>
                     </div>
                     <hr class="mdivider">
                     <div class="mfield">
@@ -901,10 +941,25 @@ $categories = mysqli_query($con, 'SELECT * FROM lab_categories');
                                 <?php endwhile; ?>
                             </select>
                         </div>
+                    <div class="mrow">
                         <div class="mfield">
                             <label>Unit *</label>
                             <input type="text" name="unit" id="edit_unit" required>
                         </div>
+                    </div>
+                    <div class="mrow">
+                        <div class="mfield">
+                            <label>Total Quantity *</label>
+                            <input type="number" name="total_quantity" id="edit_total_quantity" min="0" max="9999" required>
+                        </div>
+                        <div class="mfield">
+                            <label>Available Quantity *</label>
+                            <input type="number" name="available_quantity" id="edit_available_quantity" min="0" max="9999" required>
+                        </div>
+                    </div>
+                    <div class="mfield">
+                        <label>Acquisition Date *</label>
+                        <input type="date" name="acquisition_date" id="edit_acquisition_date" required>
                     </div>
                     <hr class="mdivider">
                     <div class="mfield">
@@ -955,6 +1010,16 @@ $categories = mysqli_query($con, 'SELECT * FROM lab_categories');
                         <label>Remarks / Reason *</label>
                         <input type="text" name="remarks" placeholder="e.g. New delivery, Damaged, Lost" required>
                     </div>
+                    <div id="disposal_section" style="display:none;">
+                        <div class="mcheck">
+                            <input type="checkbox" name="is_disposal" value="1" id="isDisposalCheck" onchange="toggleDisposalReason(this)">
+                            <label for="isDisposalCheck">Mark as Disposed</label>
+                        </div>
+                        <div class="mfield mt-2" id="disposal_reason_field" style="display:none;">
+                            <label>Disposal Reason *</label>
+                            <input type="text" name="disposal_reason" id="disposal_reason_input" placeholder="e.g. Beyond repair, Obsolete">
+                        </div>
+                    </div>
                 </form>
             </div>
             <div class="modal-footer-custom">
@@ -977,6 +1042,9 @@ $categories = mysqli_query($con, 'SELECT * FROM lab_categories');
                 document.getElementById('edit_item_name').value = data.item_name;
                 document.getElementById('edit_category_id').value = data.category_id;
                 document.getElementById('edit_unit').value = data.unit;
+                document.getElementById('edit_total_quantity').value = data.total_quantity;
+                document.getElementById('edit_available_quantity').value = data.available_quantity;
+                document.getElementById('edit_acquisition_date').value = data.acquisition_date ? data.acquisition_date.split(' ')[0] : '<?= date('Y-m-d') ?>';
                 document.getElementById('removePhotoCheck').checked = false;
                 new bootstrap.Modal(document.getElementById('editItemModal')).show();
             });
@@ -1011,15 +1079,33 @@ $categories = mysqli_query($con, 'SELECT * FROM lab_categories');
             btnEl.style.background = '#065f46';
             btnEl.style.boxShadow = '0 4px 14px rgba(4,120,87,.2)';
             btnEl.innerHTML = '<i class="bi bi-plus-lg"></i> Add';
+            document.getElementById('disposal_section').style.display = 'none';
         } else {
             icon.style.background = 'rgba(192,57,43,.1)';
             icon.style.color = '#7f1d1d';
             btnEl.style.background = '#C0392B';
             btnEl.style.boxShadow = '0 4px 14px rgba(192,57,43,.2)';
             btnEl.innerHTML = '<i class="bi bi-dash-lg"></i> Remove';
+            document.getElementById('disposal_section').style.display = 'block';
         }
 
+        document.getElementById('isDisposalCheck').checked = false;
+        document.getElementById('disposal_reason_field').style.display = 'none';
+        document.getElementById('disposal_reason_input').required = false;
+
         new bootstrap.Modal(document.getElementById('adjustQtyModal')).show();
+    }
+
+    function toggleDisposalReason(chk) {
+        const field = document.getElementById('disposal_reason_field');
+        const input = document.getElementById('disposal_reason_input');
+        if (chk.checked) {
+            field.style.display = 'block';
+            input.required = true;
+        } else {
+            field.style.display = 'none';
+            input.required = false;
+        }
     }
 
     function submitAdjustQty(e) {

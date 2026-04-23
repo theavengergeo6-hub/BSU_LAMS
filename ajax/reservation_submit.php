@@ -27,12 +27,13 @@ $course = isset($_POST['course']) ? mysqli_real_escape_string($con, $_POST['cour
 $station = isset($_POST['station']) ? mysqli_real_escape_string($con, $_POST['station']) : '';
 $batch = isset($_POST['batch']) ? mysqli_real_escape_string($con, $_POST['batch']) : '';
 $date = isset($_POST['date']) ? mysqli_real_escape_string($con, $_POST['date']) : '';
-$time = isset($_POST['time']) ? mysqli_real_escape_string($con, $_POST['time']) : '';
+$start_time = isset($_POST['time']) ? mysqli_real_escape_string($con, $_POST['time']) : '';
+$end_time = isset($_POST['end_time']) ? mysqli_real_escape_string($con, $_POST['end_time']) : '';
 
 $raw_cart = isset($_POST['cart']) ? $_POST['cart'] : '';
 $cart = json_decode($raw_cart, true);
 
-if(empty($name) || empty($email) || empty($date) || empty($cart)) {
+if(empty($name) || empty($email) || empty($date) || empty($start_time) || empty($end_time) || empty($cart)) {
     send_response('error', 'Please fill in all required fields and add items to your cart.');
 }
 
@@ -53,11 +54,11 @@ $res_no = 'LAB-' . $date_prefix . '-' . str_pad($seq, 3, '0', STR_PAD_LEFT);
 
 try {
     // Insert reservation
-    $stmt = $con->prepare("INSERT INTO lab_reservations (reservation_no, user_name, user_email, user_contact, subject, course_section, station, batch, reservation_date, reservation_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt = $con->prepare("INSERT INTO lab_reservations (reservation_no, user_name, user_email, user_contact, subject, course_section, station, batch, reservation_date, reservation_time, reservation_end_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     if(!$stmt) {
         throw new Exception("Reservation table error: " . $con->error);
     }
-    $stmt->bind_param("ssssssssss", $res_no, $name, $email, $contact, $subject, $course, $station, $batch, $date, $time);
+    $stmt->bind_param("sssssssssss", $res_no, $name, $email, $contact, $subject, $course, $station, $batch, $date, $start_time, $end_time);
     
     if(!$stmt->execute()) {
         throw new Exception("Failed to save reservation: " . $stmt->error);

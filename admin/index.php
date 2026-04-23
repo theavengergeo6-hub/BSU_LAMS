@@ -4,15 +4,16 @@ require('header.php');
 $today = date('Y-m-d');
 $stats = ['pending' => 0, 'approved' => 0, 'ongoing' => 0, 'completed_today' => 0];
 
-$res1 = mysqli_query($con, "SELECT status, COUNT(*) as cnt, reservation_date FROM lab_reservations GROUP BY status, reservation_date");
+$res1 = mysqli_query($con, "SELECT status, reservation_date, COUNT(*) as cnt FROM lab_reservations GROUP BY status, reservation_date");
 while ($r = mysqli_fetch_assoc($res1)) {
-    if ($r['status'] == 'Pending')
+    $s = strtolower($r['status']);
+    if ($s == 'pending')
         $stats['pending'] += $r['cnt'];
-    if ($r['status'] == 'Approved')
+    if ($s == 'approved')
         $stats['approved'] += $r['cnt'];
-    if ($r['status'] == 'Ongoing')
+    if ($s == 'ongoing')
         $stats['ongoing'] += $r['cnt'];
-    if ($r['status'] == 'Completed' && $r['reservation_date'] == $today)
+    if ($s == 'completed' && $r['reservation_date'] == $today)
         $stats['completed_today'] += $r['cnt'];
 }
 
@@ -627,27 +628,27 @@ $recent_res = mysqli_query($con, "SELECT * FROM lab_reservations ORDER BY create
         flex-shrink: 0;
     }
 
-    .status-Pending {
+    .status-Pending, .status-pending {
         background: rgba(180, 83, 9, 0.10);
         color: #92400e;
     }
 
-    .status-Approved {
+    .status-Approved, .status-approved {
         background: rgba(29, 78, 216, 0.10);
         color: #1e40af;
     }
 
-    .status-Ongoing {
+    .status-Ongoing, .status-ongoing {
         background: rgba(15, 118, 110, 0.10);
         color: #065f46;
     }
 
-    .status-Completed {
+    .status-Completed, .status-completed {
         background: rgba(4, 120, 87, 0.10);
         color: #064e3b;
     }
 
-    .status-Rejected {
+    .status-Rejected, .status-rejected, .status-Denied, .status-denied {
         background: rgba(192, 57, 43, 0.10);
         color: #7f1d1d;
     }

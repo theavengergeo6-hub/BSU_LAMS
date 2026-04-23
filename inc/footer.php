@@ -1,7 +1,7 @@
 <!-- Footer -->
 <div class="container-fluid bg-white mt-5">
     <div class="row">
-        <div class="col-lg-4 p-4">
+        <div class="col-lg-8 p-4">
             <h4 class="fw-bold fs-4 mb-2 text-danger">KLRS</h4>
             <p>
                 Kitchen Laboratory Requisition System for the Hot Kitchen, Cold Kitchen, Food & Beverage Services, and
@@ -13,12 +13,6 @@
             <a href="<?= BASE_URL ?>/index.php" class="d-inline-block mb-2 text-dark text-decoration-none">Home</a><br>
             <a href="<?= BASE_URL ?>/reserve.php" class="d-inline-block mb-2 text-dark text-decoration-none">Request Equipment</a><br>
             <a href="<?= BASE_URL ?>/my_reservations.php" class="d-inline-block mb-2 text-dark text-decoration-none">My Requisitions</a><br>
-        </div>
-        <div class="col-lg-4 p-4">
-            <h5 class="mb-3 text-dark">Contact Us</h5>
-            <p>BSU Main Campus, Nasugbu Batangas</p>
-            <p>Email: laboratory@bsu.edu.ph</p>
-            <p>Phone: +63 123 456 7890</p>
         </div>
     </div>
 </div>

@@ -1,6 +1,17 @@
-// KLRS Global Helpers
 document.addEventListener("DOMContentLoaded", () => {
     console.log("KLRS Global Helpers Loaded");
+    
+    // Navbar scroll effect
+    const navbar = document.querySelector('.navbar');
+    if (navbar) {
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                navbar.classList.add('navbar-scrolled', 'shadow');
+            } else {
+                navbar.classList.remove('navbar-scrolled', 'shadow');
+            }
+        });
+    }
 });
 
 function showToast(type, message) {

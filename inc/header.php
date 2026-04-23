@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../cron/restoration.php';
 $current_page = basename($_SERVER['PHP_SELF']);
 $logo_url = BASE_URL . '/assets/images/logo.png';
 ?>

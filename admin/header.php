@@ -1,7 +1,11 @@
 <?php
 require_once('../config.php');
 require_once('../inc/auth.php');
+require_once('../inc/cron_cooldown.php');
 adminLogin();
+
+// Run availability checks periodically (on each admin page hit)
+runCooldownCron($con);
 
 // Prevent browser caching to ensure user cannot go back after logout
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");

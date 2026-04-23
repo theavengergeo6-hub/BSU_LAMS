@@ -932,13 +932,27 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
                     </div>
                     <div class="field">
                         <label>Time (7AM – 5PM) <span class="req">*</span></label>
-                        <select id="req_time" onchange="saveFormData(); reloadItemsForTimeslot();">
-                            <option value="" disabled selected>Select time slot</option>
+                        <select id="req_time" onchange="saveFormData(); reloadItemsForTimeslot(); updateEndTimeMin();">
+                            <option value="" disabled selected>Select start time</option>
                             <?php
                             $s = strtotime('07:00');
                             $e = strtotime('17:00');
                             while ($s <= $e) {
-                                echo "<option value='" . date('h:i A', $s) . "'>" . date('h:i A', $s) . "</option>";
+                                echo "<option value='" . date('H:i', $s) . "'>" . date('h:i A', $s) . "</option>";
+                                $s = strtotime('+30 minutes', $s);
+                            }
+                            ?>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>End Time (7AM – 5PM) <span class="req">*</span></label>
+                        <select id="req_end_time" onchange="saveFormData(); reloadItemsForTimeslot();">
+                            <option value="" disabled selected>Select end time</option>
+                            <?php
+                            $s = strtotime('07:30');
+                            $e = strtotime('20:00'); // Allowing later end times for cooldown
+                            while ($s <= $e) {
+                                echo "<option value='" . date('H:i', $s) . "'>" . date('h:i A', $s) . "</option>";
                                 $s = strtotime('+30 minutes', $s);
                             }
                             ?>
@@ -1081,8 +1095,44 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
     function enforceMax(input) {
         let val = parseInt(input.value);
         let max = parseInt(input.max);
-        if (val > max) input.value = max;
+        const warningId = 'warning-' + input.id.split('-')[1];
+        let warningEl = document.getElementById(warningId);
+        
+        if (val > max) {
+            input.value = max;
+            if (!warningEl) {
+                warningEl = document.createElement('div');
+                warningEl.id = warningId;
+                warningEl.style.color = 'var(--red)';
+                warningEl.style.fontSize = '0.7rem';
+                warningEl.style.marginTop = '2px';
+                warningEl.textContent = 'Only ' + max + ' available';
+                input.parentNode.appendChild(warningEl);
+                setTimeout(() => warningEl.remove(), 2000);
+            }
+        }
         if (val < 1 && input.value !== "") input.value = 1;
+    }
+
+    function updateEndTimeMin() {
+        const startTime = document.getElementById('req_time').value;
+        const endTimeSelect = document.getElementById('req_end_time');
+        if (!startTime) return;
+        
+        const [h, m] = startTime.split(':').map(Number);
+        const startTotalMin = h * 60 + m;
+        
+        Array.from(endTimeSelect.options).forEach(opt => {
+            if (!opt.value) return;
+            const [oh, om] = opt.value.split(':').map(Number);
+            const optTotalMin = oh * 60 + om;
+            opt.disabled = optTotalMin <= startTotalMin;
+        });
+        
+        if (endTimeSelect.value) {
+            const [eh, em] = endTimeSelect.value.split(':').map(Number);
+            if (eh * 60 + em <= startTotalMin) endTimeSelect.value = "";
+        }
     }
 
     // Seed category names from PHP
@@ -1118,9 +1168,11 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
 
         const date = document.getElementById('req_date')?.value || '';
         const time = document.getElementById('req_time')?.value || '';
+        const endTime = document.getElementById('req_end_time')?.value || '';
         const params = new URLSearchParams({ category_id: catId });
         if (date) params.append('date', date);
         if (time) params.append('time', time);
+        if (endTime) params.append('end_time', endTime);
 
         fetch(`ajax/get_items_by_category.php?${params.toString()}`)
             .then(r => r.json())
@@ -1139,10 +1191,11 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
     function reloadItemsForTimeslot() {
         const date = document.getElementById('req_date')?.value || '';
         const time = document.getElementById('req_time')?.value || '';
+        const endTime = document.getElementById('req_end_time')?.value || '';
 
         // Show the timeslot notice once both are selected
         const notice = document.getElementById('timeslot-notice');
-        if (notice) notice.style.display = (date && time) ? 'block' : 'none';
+        if (notice) notice.style.display = (date && time && endTime) ? 'block' : 'none';
 
         // Bust the item cache so every category reloads with fresh availability
         loadedCats = {};
@@ -1306,7 +1359,7 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
                             <i class="bi ${inCart ? 'bi-cart-check' : 'bi-cart-plus'}"></i>
                             ${inCart ? 'Added' : 'Add to Cart'}
                         </button>` : `
-                        <button class="btn-add" disabled>Out of stock</button>`}
+                        <button class="btn-add" disabled>Unavailable at this moment</button>`}
                     </div>
                 </div>`;
             }
@@ -1358,7 +1411,7 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
                             id="vaddbtn-${v.id}" onclick="toggleVariantInCart(${v.id}, '${safe}', ${avail}, ${catId})">
                             ${inCart ? 'Added' : 'Add'}
                         </button>
-                    ` : `<span class="text-danger small fw-bold">Out of stock</span>`}
+                    ` : `<span class="text-danger small fw-bold">Unavailable at this moment</span>`}
                 </div>
             </div>`;
         }).join('');
@@ -1513,7 +1566,8 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
             { id: 'req_station', label: 'Station Setup' },
             { id: 'req_batch', label: 'Batch No.' },
             { id: 'req_date', label: 'Date' },
-            { id: 'req_time', label: 'Time' },
+            { id: 'req_time', label: 'Start Time' },
+            { id: 'req_end_time', label: 'End Time' },
         ];
 
         for (const f of fields) {
@@ -1544,6 +1598,7 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
         formData.append('batch', document.getElementById('req_batch').value.trim());
         formData.append('date', document.getElementById('req_date').value);
         formData.append('time', document.getElementById('req_time').value);
+        formData.append('end_time', document.getElementById('req_end_time').value);
 
         const cartObj = {};
         Object.entries(labCart).forEach(([id, v]) => {
@@ -1611,7 +1666,8 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
             station: document.getElementById('req_station').value,
             batch: document.getElementById('req_batch').value,
             date: document.getElementById('req_date').value,
-            time: document.getElementById('req_time').value
+            time: document.getElementById('req_time').value,
+            end_time: document.getElementById('req_end_time').value
         };
         sessionStorage.setItem('reserve_form_data', JSON.stringify(data));
         sessionStorage.setItem('reserve_cart', JSON.stringify(labCart));
