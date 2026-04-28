@@ -45,7 +45,7 @@ if ($q && mysqli_num_rows($q) > 0) {
                 
                 // Log the restoration
                 $remarks = "Auto-restored items from $res_no (3h limit reached)";
-                $stmt = $con->prepare("INSERT INTO lab_item_logs (item_id, change_type, quantity, remarks, performed_by) VALUES (?, '+', ?, ?, 0)");
+                $stmt = $con->prepare("INSERT INTO lab_item_logs (item_id, change_type, quantity_change, remarks, performed_by) VALUES (?, '+', ?, ?, 0)");
                 $stmt->bind_param("iis", $item_id, $qty, $remarks);
                 $stmt->execute();
             }

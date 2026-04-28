@@ -891,11 +891,11 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
                         <input type="text" id="req_name" oninput="saveFormData()" onblur="capitalizeInput(this); saveFormData()">
                     </div>
                     <div class="field">
-                        <label>Email Address <span class="req">*</span></label>
+                        <label>Email Address</label>
                         <input type="email" id="req_email" oninput="saveFormData()">
                     </div>
                     <div class="field">
-                        <label>Contact Number <span class="req">*</span></label>
+                        <label>Contact Number</label>
                         <input type="text" id="req_contact" oninput="saveFormData()">
                     </div>
                     <div class="field">
@@ -1559,8 +1559,6 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
 
         const fields = [
             { id: 'req_name', label: 'Full Name' },
-            { id: 'req_email', label: 'Email Address' },
-            { id: 'req_contact', label: 'Contact Number' },
             { id: 'req_course', label: 'Course & Section' },
             { id: 'req_subject', label: 'Subject' },
             { id: 'req_station', label: 'Station Setup' },

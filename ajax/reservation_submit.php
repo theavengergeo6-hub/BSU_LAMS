@@ -33,8 +33,8 @@ $end_time = isset($_POST['end_time']) ? mysqli_real_escape_string($con, $_POST['
 $raw_cart = isset($_POST['cart']) ? $_POST['cart'] : '';
 $cart = json_decode($raw_cart, true);
 
-if(empty($name) || empty($email) || empty($date) || empty($start_time) || empty($end_time) || empty($cart)) {
-    send_response('error', 'Please fill in all required fields and add items to your cart.');
+if(empty($name) || empty($date) || empty($start_time) || empty($end_time) || empty($cart)) {
+    send_response('error', 'Please fill in all required fields (Name, Date, Time) and add items to your cart.');
 }
 
 // Generate Reservation No.

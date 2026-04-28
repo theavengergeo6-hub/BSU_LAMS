@@ -428,9 +428,6 @@ body, .main-content, #main-content {
                             <button class="act-btn act-btn-ongoing" onclick="updateStatus(<?= $id ?>, 'Ongoing')">
                                 <i class="bi bi-play-fill"></i> Set Ongoing
                             </button>
-                            <button class="act-btn" style="background:#059669;color:#fff;border-color:#059669;" onclick="earlyReturn(<?= $id ?>, '<?= $row['reservation_no'] ?>')">
-                                <i class="bi bi-arrow-return-left"></i> Early Return
-                            </button>
                             <a class="act-btn act-btn-print" href="print_requisition.php?id=<?= $id ?>" target="_blank">
                                 <i class="bi bi-printer-fill"></i> Print Form
                             </a>
@@ -443,9 +440,6 @@ body, .main-content, #main-content {
                             </button>
                             <button class="act-btn act-btn-complete" onclick="updateStatus(<?= $id ?>, 'Completed')">
                                 <i class="bi bi-check-circle-fill"></i> Complete
-                            </button>
-                            <button class="act-btn" style="background:#059669;color:#fff;border-color:#059669;" onclick="earlyReturn(<?= $id ?>, '<?= $row['reservation_no'] ?>')">
-                                <i class="bi bi-arrow-return-left"></i> Early Return
                             </button>
                             <a class="act-btn act-btn-print" href="print_requisition.php?id=<?= $id ?>" target="_blank">
                                 <i class="bi bi-printer-fill"></i> Print Form
@@ -619,30 +613,7 @@ function updateStatus(id, newStatus) {
     });
 }
 
-function earlyReturn(id, resNo) {
-    Swal.fire({
-        title: 'Confirm Early Return?',
-        text: `Item availability for #${resNo} will be restored immediately, bypassing the 3-hour cooldown.`,
-        icon: 'success',
-        showCancelButton: true,
-        confirmButtonColor: '#059669',
-        confirmButtonText: 'Yes, restore stock',
-        cancelButtonText: 'Cancel'
-    }).then(result => {
-        if (result.isConfirmed) {
-            let fd = new FormData();
-            fd.append('id', id);
-            fetch('../ajax/early_return.php', { method:'POST', body: fd })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        Swal.fire({ icon:'success', title:'Restored', text: 'Items are now back in circulation.', toast:true, position:'top-end', timer:3000, showConfirmButton:false })
-                            .then(() => location.reload());
-                    } else alert(data.message);
-                });
-        }
-    });
-}
+
 </script>
 
 

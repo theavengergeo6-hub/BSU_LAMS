@@ -40,10 +40,10 @@
                     <!-- Floating indicators -->
                     <div class="glass-card position-absolute p-3 rounded-4 shadow-lg floating" style="bottom: 10%; left: -5%; z-index: 3;">
                         <div class="d-flex align-items-center gap-3">
-                            <div class="bg-success rounded-circle p-2"><i class="bi bi-check2 text-white"></i></div>
+                            <div class="bg-success rounded-circle p-2"><i class="bi bi-lightning-fill text-white"></i></div>
                             <div>
-                                <small class="text-white-50 d-block">Inventory</small>
-                                <strong class="text-white">Real-time Sync</strong>
+                                <small class="text-white-50 d-block">Booking</small>
+                                <strong class="text-white">Instant Request</strong>
                             </div>
                         </div>
                     </div>
@@ -71,10 +71,10 @@
                 <div class="swiper-slide">
                     <div class="feature-card p-5 rounded-4 bg-white shadow-sm border-bottom border-danger border-4 h-100">
                         <div class="icon-box bg-danger bg-opacity-10 text-danger rounded-circle d-flex align-items-center justify-content-center mb-4" style="width: 70px; height: 70px;">
-                            <i class="bi bi-hdd-stack fs-2"></i>
+                            <i class="bi bi-search fs-2"></i>
                         </div>
-                        <h3 class="fw-bold h4 mb-3">Smart Inventory</h3>
-                        <p class="text-muted fs-5 mb-0">Real-time availability tracking across all laboratory categories. Never miss a piece of equipment again.</p>
+                        <h3 class="fw-bold h4 mb-3">Online Catalog</h3>
+                        <p class="text-muted fs-5 mb-0">Browse and select from our extensive collection of kitchen equipment and laboratory essentials.</p>
                     </div>
                 </div>
                 <!-- Easy Booking -->
@@ -91,20 +91,20 @@
                 <div class="swiper-slide">
                     <div class="feature-card p-5 rounded-4 bg-white shadow-sm border-bottom border-primary border-4 h-100">
                         <div class="icon-box bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center mb-4" style="width: 70px; height: 70px;">
-                            <i class="bi bi-file-earmark-pdf fs-2"></i>
+                            <i class="bi bi-clock-history fs-2"></i>
                         </div>
-                        <h3 class="fw-bold h4 mb-3">Auto Forms</h3>
-                        <p class="text-muted fs-5 mb-0">Generates ready-to-print requisition forms automatically, saving you time and reducing manual errors.</p>
+                        <h3 class="fw-bold h4 mb-3">Live Status</h3>
+                        <p class="text-muted fs-5 mb-0">Monitor the progress of your requests in real-time, from submission until your laboratory session begins.</p>
                     </div>
                 </div>
                 <!-- Secure Data -->
                 <div class="swiper-slide">
                     <div class="feature-card p-5 rounded-4 bg-white shadow-sm border-bottom border-success border-4 h-100">
                         <div class="icon-box bg-success bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center mb-4" style="width: 70px; height: 70px;">
-                            <i class="bi bi-shield-lock fs-2"></i>
+                            <i class="bi bi-person-badge fs-2"></i>
                         </div>
-                        <h3 class="fw-bold h4 mb-3">Secure Records</h3>
-                        <p class="text-muted fs-5 mb-0">Authenticated access ensures all borrowing records are safe, accurate, and easily accessible by authorized staff.</p>
+                        <h3 class="fw-bold h4 mb-3">My History</h3>
+                        <p class="text-muted fs-5 mb-0">Easily access your personal requisition history and review details of your previous and upcoming sessions.</p>
                     </div>
                 </div>
             </div>
@@ -157,7 +157,7 @@ document.addEventListener("DOMContentLoaded", function() {
             <div class="p-5 rounded-4 bg-white shadow-sm border-top border-danger border-4 h-100 hover-lift">
                 <div class="step-num text-danger fw-bold fs-3 mb-4">01</div>
                 <h4 class="fw-bold mb-3">Browse Catalog</h4>
-                <p class="text-muted fs-5 mb-0">Explore our extensive inventory of high-quality kitchen equipment and laboratory items.</p>
+                <p class="text-muted fs-5 mb-0">Explore our extensive collection of high-quality kitchen equipment and laboratory items.</p>
             </div>
         </div>
         <div class="col-md-4">
