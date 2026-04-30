@@ -25,30 +25,35 @@ function runCooldownCron($con) {
         $res_id = $row['id'];
         $res_no = $row['reservation_no'];
         
-        mysqli_begin_transaction($con);
-        try {
-            // Restore items
-            $items_q = mysqli_query($con, "SELECT item_id, approved_quantity FROM lab_reservation_items WHERE reservation_id = $res_id AND approved_quantity > 0");
-            while($itm = mysqli_fetch_assoc($items_q)) {
-                $item_id = $itm['item_id'];
-                $qty = $itm['approved_quantity'];
+        // 1. ATOMIC CHECK: Try to set stock_restored = 1 only if it is currently 0.
+        // This prevents race conditions where two processes try to restore the same reservation.
+        mysqli_query($con, "UPDATE lab_reservations SET stock_restored = 1 WHERE id = $res_id AND stock_restored = 0");
+        
+        if (mysqli_affected_rows($con) > 0) {
+            mysqli_begin_transaction($con);
+            try {
+                // Restore items
+                $items_q = mysqli_query($con, "SELECT item_id, approved_quantity FROM lab_reservation_items WHERE reservation_id = $res_id AND approved_quantity > 0");
+                while($itm = mysqli_fetch_assoc($items_q)) {
+                    $item_id = $itm['item_id'];
+                    $qty = $itm['approved_quantity'];
+                    
+                    mysqli_query($con, "UPDATE lab_items SET available_quantity = available_quantity + $qty WHERE id = $item_id");
+                    
+                    // Log the return
+                    $remarks = "Cooldown expired for $res_no (auto-returned +$qty)";
+                    $perf_by = 1; // System/Admin 1
+                    $log_stmt = mysqli_prepare($con, "INSERT INTO lab_item_logs (item_id, change_type, quantity_change, remarks, performed_by) VALUES (?, '+', ?, ?, ?)");
+                    mysqli_stmt_bind_param($log_stmt, "iisi", $item_id, $qty, $remarks, $perf_by);
+                    mysqli_stmt_execute($log_stmt);
+                }
                 
-                mysqli_query($con, "UPDATE lab_items SET available_quantity = available_quantity + $qty WHERE id = $item_id");
-                
-                // Log the return
-                $remarks = "Cooldown expired for $res_no (auto-returned +$qty)";
-                $perf_by = 1; // System/Admin 1
-                $log_stmt = mysqli_prepare($con, "INSERT INTO lab_item_logs (item_id, change_type, quantity_change, remarks, performed_by) VALUES (?, '+', ?, ?, ?)");
-                mysqli_stmt_bind_param($log_stmt, "iisi", $item_id, $qty, $remarks, $perf_by);
-                mysqli_stmt_execute($log_stmt);
+                mysqli_commit($con);
+            } catch(Exception $e) {
+                mysqli_rollback($con);
+                // If it failed, we might want to reset stock_restored to 0, but usually DB errors here are fatal anyway
+                mysqli_query($con, "UPDATE lab_reservations SET stock_restored = 0 WHERE id = $res_id");
             }
-            
-            // Mark as restored
-            mysqli_query($con, "UPDATE lab_reservations SET stock_restored = 1 WHERE id = $res_id");
-            
-            mysqli_commit($con);
-        } catch(Exception $e) {
-            mysqli_rollback($con);
         }
     }
 }

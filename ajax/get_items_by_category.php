@@ -19,7 +19,10 @@ if (isset($_GET['category_id'])) {
     $start    = isset($_GET['time']) ? mysqli_real_escape_string($con, $_GET['time']) : '';
     $end      = isset($_GET['end_time']) ? mysqli_real_escape_string($con, $_GET['end_time']) : '';
 
-    if ($date && $start && $end) {
+    if ($date && $start) {
+        // If end time is not yet selected, assume a 1-minute duration for initial availability check
+        $calc_end = $end ? $end : date('H:i', strtotime($start) + 60);
+
         $query = "
             SELECT i.*,
                    GREATEST(0,
@@ -29,22 +32,14 @@ if (isset($_GET['category_id'])) {
                            JOIN lab_reservations r ON ri.reservation_id = r.id
                            WHERE ri.item_id = i.id
                              AND r.reservation_date = '$date'
-                             -- Item is occupied if not restored and...
+                             -- Item is occupied if not restored and status is valid
                              AND (r.stock_restored = 0 OR r.stock_restored IS NULL)
+                             AND (LOWER(r.status) IN ('approved', 'ongoing', 'completed'))
                              AND (
-                                 -- 1. It is currently Ongoing and within its 3h cooldown
-                                 (LOWER(r.status) = 'ongoing' AND (r.cooldown_until > NOW() OR r.cooldown_until IS NULL))
-                                 OR
-                                 -- 2. It is Approved for a timeslot that overlaps with the 3-hour window of this reservation
-                                 (LOWER(r.status) = 'approved' AND 
-                                     '$start:00' < DATE_FORMAT(DATE_ADD(STR_TO_DATE(r.reservation_time, '%H:%i'), INTERVAL 3 HOUR), '%H:%i:%s') AND 
-                                     '$end:00' > DATE_FORMAT(STR_TO_DATE(r.reservation_time, '%H:%i'), '%H:%i:%s')
-                                 )
-                                 OR
-                                 -- 3. It is already Completed/Ongoing but still in its 3-hour cooldown window
-                                 ((LOWER(r.status) = 'ongoing' OR LOWER(r.status) = 'completed') AND 
-                                     (r.cooldown_until > NOW() OR (r.cooldown_until IS NULL AND DATE_ADD(STR_TO_DATE(CONCAT(r.reservation_date, ' ', r.reservation_time), '%Y-%m-%d %H:%i'), INTERVAL 3 HOUR) > NOW()))
-                                 )
+                                 -- Overlap logic: (NewStart < ExistEnd+3h) AND (NewEnd > ExistStart)
+                                 STR_TO_DATE('$start', '%H:%i') < DATE_ADD(STR_TO_DATE(r.reservation_end_time, '%H:%i'), INTERVAL 3 HOUR)
+                                 AND 
+                                 STR_TO_DATE('$calc_end', '%H:%i') > STR_TO_DATE(r.reservation_time, '%H:%i')
                              )
                        ), 0)
                    ) AS available_quantity

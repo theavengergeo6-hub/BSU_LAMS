@@ -39,7 +39,15 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id'], $_POST['status'])
             $update_fields .= ", stock_restored = 1";
         }
         
-        $con->query("UPDATE lab_reservations SET $update_fields WHERE id=$id");
+        // Only proceed with stock restoration if we can atomically set stock_restored to 1
+        if ($needs_restoration) {
+            $con->query("UPDATE lab_reservations SET $update_fields WHERE id=$id AND stock_restored=0");
+            if ($con->affected_rows === 0) {
+                $needs_restoration = false; // Someone else already restored it
+            }
+        } else {
+            $con->query("UPDATE lab_reservations SET $update_fields WHERE id=$id");
+        }
         
         if ($needs_restoration) {
             $items_q = $con->query("SELECT item_id, approved_quantity FROM lab_reservation_items WHERE reservation_id=$id AND approved_quantity > 0");

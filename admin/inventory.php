@@ -469,6 +469,14 @@ $categories = mysqli_query($con, 'SELECT * FROM lab_categories');
     }
 
     /* ── Modal ── */
+    .modal {
+        z-index: 9999 !important;
+    }
+
+    .modal-backdrop {
+        z-index: 9998 !important;
+    }
+
     .modal-content {
         border: none !important;
         border-radius: 16px !important;
@@ -941,7 +949,6 @@ $categories = mysqli_query($con, 'SELECT * FROM lab_categories');
                                 <?php endwhile; ?>
                             </select>
                         </div>
-                    <div class="mrow">
                         <div class="mfield">
                             <label>Unit *</label>
                             <input type="text" name="unit" id="edit_unit" required>
@@ -1046,7 +1053,10 @@ $categories = mysqli_query($con, 'SELECT * FROM lab_categories');
                 document.getElementById('edit_available_quantity').value = data.available_quantity;
                 document.getElementById('edit_acquisition_date').value = data.acquisition_date ? data.acquisition_date.split(' ')[0] : '<?= date('Y-m-d') ?>';
                 document.getElementById('removePhotoCheck').checked = false;
-                new bootstrap.Modal(document.getElementById('editItemModal')).show();
+                
+                let modalEl = document.getElementById('editItemModal');
+                let modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                modal.show();
             });
     }
 
@@ -1093,7 +1103,9 @@ $categories = mysqli_query($con, 'SELECT * FROM lab_categories');
         document.getElementById('disposal_reason_field').style.display = 'none';
         document.getElementById('disposal_reason_input').required = false;
 
-        new bootstrap.Modal(document.getElementById('adjustQtyModal')).show();
+        let modalEl = document.getElementById('adjustQtyModal');
+        let modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+        modal.show();
     }
 
     function toggleDisposalReason(chk) {

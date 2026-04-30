@@ -1193,9 +1193,9 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
         const time = document.getElementById('req_time')?.value || '';
         const endTime = document.getElementById('req_end_time')?.value || '';
 
-        // Show the timeslot notice once both are selected
+        // Show the timeslot notice once date and start time are selected
         const notice = document.getElementById('timeslot-notice');
-        if (notice) notice.style.display = (date && time && endTime) ? 'block' : 'none';
+        if (notice) notice.style.display = (date && time) ? 'block' : 'none';
 
         // Bust the item cache so every category reloads with fresh availability
         loadedCats = {};

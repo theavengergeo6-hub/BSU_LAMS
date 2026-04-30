@@ -30,33 +30,36 @@ if ($q && mysqli_num_rows($q) > 0) {
         $res_id = $res['id'];
         $res_no = $res['reservation_no'];
         
-        // Start transaction for each restoration
-        mysqli_begin_transaction($con);
-        try {
-            // Get items to restore
-            $items_q = mysqli_query($con, "SELECT item_id, approved_quantity FROM lab_reservation_items WHERE reservation_id = $res_id AND approved_quantity > 0");
-            
-            while ($item = mysqli_fetch_assoc($items_q)) {
-                $item_id = $item['item_id'];
-                $qty = $item['approved_quantity'];
+        // ATOMIC CHECK: Claim the restoration by setting stock_restored = 1 first.
+        // This prevents double-restoration if multiple users/processes trigger this script.
+        mysqli_query($con, "UPDATE lab_reservations SET stock_restored = 1 WHERE id = $res_id AND stock_restored = 0");
+        
+        if (mysqli_affected_rows($con) > 0) {
+            mysqli_begin_transaction($con);
+            try {
+                // Get items to restore
+                $items_q = mysqli_query($con, "SELECT item_id, approved_quantity FROM lab_reservation_items WHERE reservation_id = $res_id AND approved_quantity > 0");
                 
-                // Restore stock
-                mysqli_query($con, "UPDATE lab_items SET available_quantity = available_quantity + $qty WHERE id = $item_id");
+                while ($item = mysqli_fetch_assoc($items_q)) {
+                    $item_id = $item['item_id'];
+                    $qty = $item['approved_quantity'];
+                    
+                    // Restore stock
+                    mysqli_query($con, "UPDATE lab_items SET available_quantity = available_quantity + $qty WHERE id = $item_id");
+                    
+                    // Log the restoration
+                    $remarks = "Auto-restored items from $res_no (3h limit reached)";
+                    $stmt = $con->prepare("INSERT INTO lab_item_logs (item_id, change_type, quantity_change, remarks, performed_by) VALUES (?, '+', ?, ?, 0)");
+                    $stmt->bind_param("iis", $item_id, $qty, $remarks);
+                    $stmt->execute();
+                }
                 
-                // Log the restoration
-                $remarks = "Auto-restored items from $res_no (3h limit reached)";
-                $stmt = $con->prepare("INSERT INTO lab_item_logs (item_id, change_type, quantity_change, remarks, performed_by) VALUES (?, '+', ?, ?, 0)");
-                $stmt->bind_param("iis", $item_id, $qty, $remarks);
-                $stmt->execute();
+                mysqli_commit($con);
+            } catch (Exception $e) {
+                mysqli_rollback($con);
+                // Reset flag so it can be tried again if it was a temporary DB failure
+                mysqli_query($con, "UPDATE lab_reservations SET stock_restored = 0 WHERE id = $res_id");
             }
-            
-            // Mark as restored
-            mysqli_query($con, "UPDATE lab_reservations SET stock_restored = 1 WHERE id = $res_id");
-            
-            mysqli_commit($con);
-        } catch (Exception $e) {
-            mysqli_rollback($con);
-            // Log error if needed: error_log("Failed to auto-restore $res_no: " . $e->getMessage());
         }
     }
 }
