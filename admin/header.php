@@ -222,6 +222,10 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 <i class="bi bi-sliders"></i>
                 Settings
             </a>
+            <a href="breakage_reports.php" class="<?= $current_page == 'breakage_reports.php' ? 'active' : '' ?>">
+                <i class="bi bi-journal-x"></i>
+                Breakage Reports
+            </a>
             <div style="height: 1px; background: #eee; margin: 1rem 0;"></div>
             <a href="logout.php" style="color: #dc3545;">
                 <i class="bi bi-box-arrow-right" style="color: #dc3545;"></i>

@@ -46,6 +46,9 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['item_id'], $_POST['chan
         exit;
     }
     
+    $q_item = $con->query("SELECT item_name, unit FROM lab_items WHERE id = $item_id");
+    $item_info = $q_item->fetch_assoc();
+
     $con->begin_transaction();
     try {
         $con->query("UPDATE lab_items SET total_quantity=$new_tot, available_quantity=$new_avail WHERE id=$item_id");
@@ -56,6 +59,21 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['item_id'], $_POST['chan
         $stmt->execute();
         
         $con->commit();
+
+        if ($type == '-') {
+            try {
+                if (file_exists('../includes/breakage_logger.php')) {
+                    require_once('../includes/breakage_logger.php');
+                    $item_name = $item_info['item_name'] ?? 'Unknown Item';
+                    $unit = $item_info['unit'] ?? '';
+                    append_to_breakage_report($item_name, $unit, $change, $remarks);
+                }
+            } catch (Throwable $e) {
+                // Log error locally but don't crash the AJAX response
+                error_log("Breakage logging failed: " . $e->getMessage());
+            }
+        }
+
         echo json_encode(['status'=>'success']);
     } catch (Exception $e) {
         $con->rollback();

@@ -26,9 +26,6 @@
                         <a href="<?= BASE_URL ?>/reserve.php" class="btn btn-primary btn-lg shadow-lg">
                             Get Started <i class="bi bi-arrow-right-short ms-1"></i>
                         </a>
-                        <a href="#features" class="btn btn-outline-light btn-lg">
-                            Learn More
-                        </a>
                     </div>
                 </div>
             </div>
