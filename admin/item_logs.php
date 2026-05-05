@@ -4,6 +4,7 @@ require('header.php');
 $start_date = isset($_GET['start']) ? mysqli_real_escape_string($con, $_GET['start']) : '';
 $end_date = isset($_GET['end']) ? mysqli_real_escape_string($con, $_GET['end']) : '';
 $item_filter = isset($_GET['item_id']) ? (int) $_GET['item_id'] : '';
+$search = isset($_GET['search']) ? mysqli_real_escape_string($con, $_GET['search']) : '';
 $change_filter = isset($_GET['type']) ? mysqli_real_escape_string($con, $_GET['type']) : '';
 
 $where = '1=1';
@@ -13,15 +14,15 @@ if ($end_date)
     $where .= " AND DATE(l.created_at) <= '$end_date'";
 if ($item_filter)
     $where .= " AND l.item_id = $item_filter";
+if ($search)
+    $where .= " AND i.item_name LIKE '%$search%'";
 if ($change_filter)
     $where .= " AND l.change_type = '$change_filter'";
 
-$items = mysqli_query($con, 'SELECT id, item_name FROM lab_items ORDER BY item_name');
-
 // Summary counts for the stat strip
-$total_q = mysqli_query($con, "SELECT COUNT(*) as c FROM lab_item_logs l WHERE $where");
-$added_q = mysqli_query($con, "SELECT COALESCE(SUM(quantity_change),0) as s FROM lab_item_logs l WHERE $where AND l.change_type='+'");
-$removed_q = mysqli_query($con, "SELECT COALESCE(SUM(quantity_change),0) as s FROM lab_item_logs l WHERE $where AND l.change_type='-'");
+$total_q = mysqli_query($con, "SELECT COUNT(*) as c FROM lab_item_logs l JOIN lab_items i ON l.item_id = i.id WHERE $where");
+$added_q = mysqli_query($con, "SELECT COALESCE(SUM(quantity_change),0) as s FROM lab_item_logs l JOIN lab_items i ON l.item_id = i.id WHERE $where AND l.change_type='+'");
+$removed_q = mysqli_query($con, "SELECT COALESCE(SUM(quantity_change),0) as s FROM lab_item_logs l JOIN lab_items i ON l.item_id = i.id WHERE $where AND l.change_type='-'");
 $total_logs = mysqli_fetch_assoc($total_q)['c'];
 $total_added = mysqli_fetch_assoc($added_q)['s'];
 $total_removed = mysqli_fetch_assoc($removed_q)['s'];
@@ -644,32 +645,25 @@ $total_removed = mysqli_fetch_assoc($removed_q)['s'];
 
     <!-- Filter bar -->
     <div class="filter-bar">
-        <form style="display:contents;" method="GET">
+        <form id="filterForm" style="display:contents;" method="GET" onsubmit="event.preventDefault(); fetchResults();">
             <?php if ($item_filter): ?>
                 <input type="hidden" name="item_id" value="<?= $item_filter ?>">
             <?php endif; ?>
             <div class="filter-field">
                 <label class="filter-label">Start Date</label>
-                <input type="date" name="start" class="filter-input" value="<?= htmlspecialchars($start_date) ?>">
+                <input type="date" name="start" class="filter-input" value="<?= htmlspecialchars($start_date) ?>" onchange="autoFilter()">
             </div>
             <div class="filter-field">
                 <label class="filter-label">End Date</label>
-                <input type="date" name="end" class="filter-input" value="<?= htmlspecialchars($end_date) ?>">
+                <input type="date" name="end" class="filter-input" value="<?= htmlspecialchars($end_date) ?>" onchange="autoFilter()">
             </div>
             <div class="filter-field">
-                <label class="filter-label">Item</label>
-                <select name="item_id" class="filter-select">
-                    <option value="">All Items</option>
-                    <?php while ($c = mysqli_fetch_assoc($items)): ?>
-                        <option value="<?= $c['id'] ?>" <?= $item_filter == $c['id'] ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($c['item_name']) ?>
-                        </option>
-                    <?php endwhile; ?>
-                </select>
+                <label class="filter-label">Item Name</label>
+                <input type="text" name="search" class="filter-input" placeholder="Search item name..." value="<?= htmlspecialchars($search) ?>" oninput="autoFilter()">
             </div>
             <div class="filter-field">
                 <label class="filter-label">Change Type</label>
-                <select name="type" class="filter-select">
+                <select name="type" class="filter-select" onchange="autoFilter()">
                     <option value="">All Types</option>
                     <option value="+" <?= $change_filter == '+' ? 'selected' : '' ?>>Added (+)</option>
                     <option value="-" <?= $change_filter == '-' ? 'selected' : '' ?>>Removed (−)</option>
@@ -679,7 +673,7 @@ $total_removed = mysqli_fetch_assoc($removed_q)['s'];
                 <button type="submit" class="btn-prim">
                     <i class="bi bi-funnel"></i> Filter
                 </button>
-                <?php if ($start_date || $end_date || $change_filter || ($item_filter && !isset($_GET['item_id_locked']))): ?>
+                <?php if ($start_date || $end_date || $change_filter || $search || ($item_filter && !isset($_GET['item_id_locked']))): ?>
                     <a href="item_logs.php<?= $item_filter ? '?item_id=' . $item_filter : '' ?>" class="btn-ghost">
                         <i class="bi bi-x-lg"></i>
                     </a>
@@ -722,7 +716,7 @@ $total_removed = mysqli_fetch_assoc($removed_q)['s'];
 
                     if (mysqli_num_rows($res) > 0):
                         while ($row = mysqli_fetch_assoc($res)):
-                            $is_add = $row['change_type'] === '+';
+                            $is_add = trim($row['change_type']) === '+';
                             $admin = $row['username'] ?: 'System';
                             ?>
                             <tr>
@@ -738,7 +732,41 @@ $total_removed = mysqli_fetch_assoc($removed_q)['s'];
                                     </span>
                                 </td>
                                 <td class="td-qty"><?= htmlspecialchars($row['quantity_change']) ?></td>
-                                <td class="td-remarks"><?= htmlspecialchars($row['remarks']) ?></td>
+                                <td class="td-remarks">
+                                    <?= htmlspecialchars($row['remarks']) ?>
+                                    <?php if ($is_add): ?>
+                                        <?php
+                                        $acq_date = $row['created_at'];
+                                        $display_remarks = $row['remarks'];
+                                        
+                                        // Check if remarks contain an explicit acquisition date
+                                        if (preg_match('/\(Acquired:\s*([\d-]+)\)/', $row['remarks'], $matches)) {
+                                            $acq_date = $matches[1] . ' 00:00:00';
+                                            // Optionally remove it from remarks so it doesn't look cluttered, or keep it.
+                                            // $display_remarks = trim(str_replace($matches[0], '', $row['remarks']));
+                                        }
+
+                                        $ad = new DateTime($acq_date);
+                                        $now = new DateTime();
+                                        $diff = $now->diff($ad);
+                                        $age_str = "";
+                                        if ($diff->y > 0) $age_str .= $diff->y . "y ";
+                                        if ($diff->m > 0) $age_str .= $diff->m . "m ";
+                                        if ($diff->d > 0) $age_str .= $diff->d . "d";
+                                        if (empty($age_str)) $age_str = "New";
+                                        
+                                        $style = "color:var(--text-3);";
+                                        if ($diff->y >= 4) $style = "color:#dc2626; font-weight:700;"; // Red if >= 4 years
+                                        else if ($diff->y >= 3) $style = "color:#ea580c; font-weight:600;"; // Orange
+                                        ?>
+                                        <div style="font-size:0.75rem; margin-top:5px; <?= $style ?>">
+                                            <i class="bi bi-clock-history"></i> Age: <?= $age_str ?>
+                                            <?php if ($diff->y >= 4): ?>
+                                                <span title="Ready for disposal"><i class="bi bi-exclamation-triangle-fill"></i></span>
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php endif; ?>
+                                </td>
                                 <td>
                                     <span class="user-pill">
                                         <i class="bi bi-person"></i>
@@ -762,5 +790,56 @@ $total_removed = mysqli_fetch_assoc($removed_q)['s'];
     </div>
 
 </div>
+
+<script>
+    let filterTimer;
+    function autoFilter() {
+        clearTimeout(filterTimer);
+        filterTimer = setTimeout(() => {
+            fetchResults();
+        }, 300);
+    }
+
+    function fetchResults() {
+        const form = document.getElementById('filterForm');
+        const formData = new FormData(form);
+        const params = new URLSearchParams(formData);
+        const url = 'item_logs.php?' + params.toString();
+
+        window.history.pushState({}, '', url);
+
+        const panel = document.querySelector('.log-panel');
+        if(panel) panel.style.opacity = '0.5';
+
+        fetch(url)
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                const newPanel = doc.querySelector('.log-panel');
+                if (newPanel && panel) {
+                    panel.innerHTML = newPanel.innerHTML;
+                    panel.style.opacity = '1';
+                }
+                
+                const oldSummary = document.querySelector('.summary-strip');
+                const newSummary = doc.querySelector('.summary-strip');
+                if (oldSummary && newSummary) {
+                    oldSummary.innerHTML = newSummary.innerHTML;
+                }
+                
+                const oldActions = document.querySelector('.filter-actions');
+                const newActions = doc.querySelector('.filter-actions');
+                if (oldActions && newActions) {
+                    oldActions.innerHTML = newActions.innerHTML;
+                }
+            })
+            .catch(err => {
+                console.error('Error fetching results:', err);
+                if(panel) panel.style.opacity = '1';
+            });
+    }
+</script>
 
 <?php require('footer.php'); ?>

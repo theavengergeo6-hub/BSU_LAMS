@@ -76,25 +76,54 @@ function append_to_breakage_report($item_name, $unit, $quantity, $remarks) {
     $spreadsheet = IOFactory::load($file);
     $sheet = $spreadsheet->getActiveSheet();
 
-    // Find the signature lines to insert ABOVE them
+    // Find the signature lines and check for existing item
     $highestRow = $sheet->getHighestRow();
-    $insertRow = $highestRow;
+    $preparedByRow = $highestRow;
+    $existingRow = null;
     
-    // Scan backwards to find 'Prepared by:'
-    for ($row = $highestRow; $row >= 1; $row--) {
-        if ($sheet->getCell("A{$row}")->getValue() == 'Prepared by:') {
-            $insertRow = $row;
+    // Scan to find 'Prepared by:' and check for existing item
+    for ($row = 6; $row <= $highestRow; $row++) {
+        $cellVal = $sheet->getCell("A{$row}")->getValue();
+        if ($cellVal == 'Prepared by:') {
+            $preparedByRow = $row;
             break;
+        }
+        
+        // Check if item already exists (case-insensitive name check)
+        if (!empty($cellVal) && strtolower(trim($cellVal)) == strtolower(trim($item_name))) {
+            $existingUnit = $sheet->getCell("B{$row}")->getValue();
+            if (strtolower(trim($existingUnit)) == strtolower(trim($unit))) {
+                $existingRow = $row;
+                // Don't break yet, we still need to find $preparedByRow
+            }
         }
     }
 
-    // Insert new row
-    $sheet->insertNewRowBefore($insertRow, 1);
-    
-    $sheet->setCellValue('A' . $insertRow, $item_name);
-    $sheet->setCellValue('B' . $insertRow, $unit);
-    $sheet->setCellValue('C' . $insertRow, $quantity);
-    $sheet->setCellValue('D' . $insertRow, $remarks);
+    if ($existingRow) {
+        // Update existing row
+        $oldQty = (int)$sheet->getCell("C{$existingRow}")->getValue();
+        $sheet->setCellValue("C{$existingRow}", $oldQty + $quantity);
+        
+        $oldRemarks = trim($sheet->getCell("D{$existingRow}")->getValue());
+        $newRemarks = trim($remarks);
+        
+        if (!empty($oldRemarks) && !empty($newRemarks)) {
+            // Check if the new remark is already part of the old remarks
+            if (stripos($oldRemarks, $newRemarks) === false) {
+                $sheet->setCellValue("D{$existingRow}", $oldRemarks . ", " . $newRemarks);
+            }
+        } else if (!empty($newRemarks)) {
+            $sheet->setCellValue("D{$existingRow}", $newRemarks);
+        }
+    } else {
+        // Insert new row before signature
+        $sheet->insertNewRowBefore($preparedByRow, 1);
+        
+        $sheet->setCellValue('A' . $preparedByRow, $item_name);
+        $sheet->setCellValue('B' . $preparedByRow, $unit);
+        $sheet->setCellValue('C' . $preparedByRow, $quantity);
+        $sheet->setCellValue('D' . $preparedByRow, $remarks);
+    }
 
     $writer = new Xlsx($spreadsheet);
     $writer->save($file);

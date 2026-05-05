@@ -54,6 +54,18 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['item_id'], $_POST['chan
         $con->query("UPDATE lab_items SET total_quantity=$new_tot, available_quantity=$new_avail WHERE id=$item_id");
         
         $admin_id = $_SESSION['adminId'] ?? 1;
+        
+        // Append acquisition date to remarks if provided
+        if ($type == '+' && !empty($_POST['add_acquisition_date'])) {
+            $add_acq = mysqli_real_escape_string($con, $_POST['add_acquisition_date']);
+            $remarks .= " (Acquired: " . $add_acq . ")";
+            
+            // Note: In admin/item_logs.php, it will parse or just display this remark. 
+            // The item_logs.php also calculates age from created_at, but we'll modify it to parse this if needed, 
+            // but even just displaying it is helpful. Wait, if we want the age calculation to use THIS date,
+            // we should parse it in item_logs.php!
+        }
+
         $stmt = $con->prepare("INSERT INTO lab_item_logs (item_id, change_type, quantity_change, remarks, performed_by, is_disposal, disposal_reason) VALUES (?, ?, ?, ?, ?, ?, ?)");
         $stmt->bind_param("isisiis", $item_id, $type, $change, $remarks, $admin_id, $is_disposal, $disposal_reason);
         $stmt->execute();

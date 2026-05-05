@@ -24,6 +24,11 @@ if(isset($_POST['item_id'])){
     // check if renaming or removing photo
     $remove_photo = isset($_POST['remove_photo']) && $_POST['remove_photo'] == '1';
     
+    // Get current item details to check for quantity changes
+    $curr_q = mysqli_query($con, "SELECT total_quantity FROM lab_items WHERE id=$item_id");
+    $curr_item = mysqli_fetch_assoc($curr_q);
+    $old_total = $curr_item['total_quantity'];
+    
     $q = "UPDATE lab_items SET item_name='$item_name', category_id=$category_id, unit='$unit', acquisition_date='$acq_date'";
     
     if($total_qty != -1) $q .= ", total_quantity=$total_qty";
@@ -42,6 +47,20 @@ if(isset($_POST['item_id'])){
     $q .= " WHERE id=$item_id";
     
     if(mysqli_query($con, $q)){
+        // Log quantity change if it was modified
+        if ($total_qty != -1 && $total_qty != $old_total) {
+            session_start();
+            $admin_id = $_SESSION['adminId'] ?? 1;
+            $diff = $total_qty - $old_total;
+            $type = $diff > 0 ? '+' : '-';
+            $abs_diff = abs($diff);
+            $remarks = "Quantity manually adjusted during item edit";
+            
+            $log_stmt = $con->prepare("INSERT INTO lab_item_logs (item_id, change_type, quantity_change, remarks, performed_by) VALUES (?, ?, ?, ?, ?)");
+            $log_stmt->bind_param("isisi", $item_id, $type, $abs_diff, $remarks, $admin_id);
+            $log_stmt->execute();
+        }
+        
         echo json_encode(['status'=>'success']);
     } else {
         echo json_encode(['status'=>'error', 'message'=>mysqli_error($con)]);

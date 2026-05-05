@@ -1017,6 +1017,12 @@ $categories = mysqli_query($con, 'SELECT * FROM lab_categories');
                         <label>Remarks / Reason *</label>
                         <input type="text" name="remarks" placeholder="e.g. New delivery, Damaged, Lost" required>
                     </div>
+                    <div id="add_acquisition_section" style="display:none;">
+                        <div class="mfield mt-2">
+                            <label>Acquisition Date (For new stock)</label>
+                            <input type="date" name="add_acquisition_date" id="add_acquisition_date" value="<?= date('Y-m-d') ?>">
+                        </div>
+                    </div>
                     <div id="disposal_section" style="display:none;">
                         <div class="mcheck">
                             <input type="checkbox" name="is_disposal" value="1" id="isDisposalCheck" onchange="toggleDisposalReason(this)">
@@ -1090,6 +1096,7 @@ $categories = mysqli_query($con, 'SELECT * FROM lab_categories');
             btnEl.style.boxShadow = '0 4px 14px rgba(4,120,87,.2)';
             btnEl.innerHTML = '<i class="bi bi-plus-lg"></i> Add';
             document.getElementById('disposal_section').style.display = 'none';
+            document.getElementById('add_acquisition_section').style.display = 'block';
         } else {
             icon.style.background = 'rgba(192,57,43,.1)';
             icon.style.color = '#7f1d1d';
@@ -1097,6 +1104,7 @@ $categories = mysqli_query($con, 'SELECT * FROM lab_categories');
             btnEl.style.boxShadow = '0 4px 14px rgba(192,57,43,.2)';
             btnEl.innerHTML = '<i class="bi bi-dash-lg"></i> Remove';
             document.getElementById('disposal_section').style.display = 'block';
+            document.getElementById('add_acquisition_section').style.display = 'none';
         }
 
         document.getElementById('isDisposalCheck').checked = false;
