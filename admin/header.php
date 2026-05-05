@@ -190,6 +190,26 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 display: block;
             }
         }
+
+        /* Notification Badge */
+        .badge-req-count {
+            background-color: var(--bsu-red);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 20px;
+            margin-left: auto;
+            display: none; /* Hidden by default */
+            box-shadow: 0 2px 5px rgba(220, 53, 69, 0.3);
+            animation: pulse-red 2s infinite;
+        }
+
+        @keyframes pulse-red {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); box-shadow: 0 2px 10px rgba(220, 53, 69, 0.5); }
+            100% { transform: scale(1); }
+        }
     </style>
 </head>
 <body>
@@ -208,7 +228,8 @@ $current_page = basename($_SERVER['PHP_SELF']);
             </a>
             <a href="reservations.php" class="<?= $current_page == 'reservations.php' ? 'active' : '' ?>">
                 <i class="bi bi-calendar-check"></i>
-                Requisitions
+                <span>Requisitions</span>
+                <span class="badge-req-count" id="badge-pending-count">0</span>
             </a>
             <a href="inventory.php" class="<?= $current_page == 'inventory.php' ? 'active' : '' ?>">
                 <i class="bi bi-box-seam"></i>
@@ -261,4 +282,24 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 function toggleSidebar() {
                     document.getElementById('sidebar').classList.toggle('active');
                 }
+
+                // Real-time requisition count
+                function updatePendingCount() {
+                    fetch('ajax/get_pending_requisitions_count.php')
+                        .then(response => response.json())
+                        .then(data => {
+                            const badge = document.getElementById('badge-pending-count');
+                            if (data.count > 0) {
+                                badge.textContent = data.count;
+                                badge.style.display = 'inline-block';
+                            } else {
+                                badge.style.display = 'none';
+                            }
+                        })
+                        .catch(err => console.error('Error fetching pending count:', err));
+                }
+
+                // Initial call and set interval
+                updatePendingCount();
+                setInterval(updatePendingCount, 15000); // Check every 15 seconds
             </script>

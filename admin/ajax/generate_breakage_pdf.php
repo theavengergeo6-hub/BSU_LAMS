@@ -50,10 +50,10 @@ if ($has_bg) {
     $pdf->Cell(0, 10, $month_str, 0, 1, 'L');
 
     // 2. COLUMN X-COORDINATES (Adjust these to line up with your image columns)
-    $col_x_name = 47;    // "NAME" column start
-    $col_x_unit = 100;   // "UNIT" column start
-    $col_x_qty = 162;    // "QUANTITY" column start
-    $col_x_remarks = 235; // "REMARKS" column start
+    $col_x_name = 11.75;    // "NAME" column start (adjusted for centering)
+    $col_x_unit = 86;   // "UNIT" column start
+    $col_x_qty = 143;    // "QUANTITY" column start
+    $col_x_remarks = 215; // "REMARKS" column start
 
     $current_y = 94; // Starting Y position for the first row
     $row_height = 4.5; // Space between rows (Updated to prevent drifting)
@@ -62,19 +62,32 @@ if ($has_bg) {
     foreach ($data as $row) {
         // Name Column
         $pdf->SetXY($col_x_name, $current_y);
-        $pdf->Cell(85, 8, $row['item_name'], 0, 0, 'L');
+        $name_font_size = 10;
+        if (strlen($row['item_name']) > 35)
+            $name_font_size = 8;
+        if (strlen($row['item_name']) > 50)
+            $name_font_size = 7;
+        $pdf->SetFont('helvetica', '', $name_font_size);
+        $pdf->Cell(85, 8, $row['item_name'], 0, 0, 'C');
 
         // Unit Column
         $pdf->SetXY($col_x_unit, $current_y);
-        $pdf->Cell(35, 8, $row['unit'], 0, 0, 'C');
+        $pdf->SetFont('helvetica', '', 10);
+        $pdf->Cell(62, 8, $row['unit'], 0, 0, 'C');
 
         // Quantity Column
         $pdf->SetXY($col_x_qty, $current_y);
-        $pdf->Cell(35, 8, $row['quantity'], 0, 0, 'C');
+        $pdf->Cell(73, 8, $row['quantity'], 0, 0, 'C');
 
         // Remarks Column
         $pdf->SetXY($col_x_remarks, $current_y);
-        $pdf->Cell(100, 8, $row['remarks'], 0, 1, 'L');
+        $remarks_font_size = 10;
+        if (strlen($row['remarks']) > 30)
+            $remarks_font_size = 8;
+        if (strlen($row['remarks']) > 45)
+            $remarks_font_size = 7;
+        $pdf->SetFont('helvetica', '', $remarks_font_size);
+        $pdf->Cell(55, 8, $row['remarks'], 0, 1, 'C');
 
         $current_y += $row_height;
     }
@@ -99,10 +112,10 @@ if ($has_bg) {
     // Table Data
     $pdf->SetFont('helvetica', '', 10);
     foreach ($data as $row) {
-        $pdf->Cell(90, 8, $row['item_name'], 1, 0, 'L');
+        $pdf->Cell(90, 8, $row['item_name'], 1, 0, 'C');
         $pdf->Cell(40, 8, $row['unit'], 1, 0, 'C');
         $pdf->Cell(40, 8, $row['quantity'], 1, 0, 'C');
-        $pdf->Cell(100, 8, $row['remarks'], 1, 1, 'L');
+        $pdf->Cell(100, 8, $row['remarks'], 1, 1, 'C');
     }
 
     $pdf->Ln(15);
