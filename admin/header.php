@@ -226,7 +226,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 <i class="bi bi-speedometer2"></i>
                 Dashboard
             </a>
-            <a href="reservations.php" class="<?= $current_page == 'reservations.php' ? 'active' : '' ?>">
+            <a href="requisitions.php" class="<?= $current_page == 'requisitions.php' ? 'active' : '' ?>">
                 <i class="bi bi-calendar-check"></i>
                 <span>Requisitions</span>
                 <span class="badge-req-count" id="badge-pending-count">0</span>

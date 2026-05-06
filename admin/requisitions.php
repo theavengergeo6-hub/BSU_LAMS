@@ -2,6 +2,7 @@
 require('header.php');
 
 $status_tab = isset($_GET['tab']) ? $_GET['tab'] : 'Pending';
+$date_filter = isset($_GET['date']) ? $_GET['date'] : '';
 $statuses   = ['Pending', 'Approved', 'Ongoing', 'Completed', 'Denied'];
 if (!in_array($status_tab, $statuses)) $status_tab = 'Pending';
 ?>
@@ -344,9 +345,22 @@ body, .main-content, #main-content {
             <div class="page-eyebrow">Admin Panel</div>
             <h1 class="page-title">Manage Requisitions</h1>
         </div>
-        <div class="search-wrap">
-            <i class="bi bi-search"></i>
-            <input type="text" id="searchInput" class="search-input" placeholder="Search by student name…" oninput="filterRows()" autocomplete="off">
+        <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+            <?php if ($status_tab == 'Completed' || $status_tab == 'Denied'): ?>
+                <div class="date-filter-wrap" style="position:relative;">
+                    <i class="bi bi-calendar-event" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-3); font-size:0.9rem; pointer-events:none;"></i>
+                    <input type="date" id="dateFilter" class="search-input" value="<?= $date_filter ?>" onchange="filterByDate(this.value)" style="padding-left:36px; width:200px;" title="Filter by date">
+                    <?php if ($date_filter): ?>
+                        <button onclick="filterByDate('')" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); border:none; background:none; color:var(--red); font-size:1.1rem; cursor:pointer;" title="Clear date filter">
+                            <i class="bi bi-x-circle-fill"></i>
+                        </button>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
+            <div class="search-wrap">
+                <i class="bi bi-search"></i>
+                <input type="text" id="searchInput" class="search-input" placeholder="Search by student name…" oninput="filterRows()" autocomplete="off">
+            </div>
         </div>
     </div>
 
@@ -369,7 +383,11 @@ body, .main-content, #main-content {
     <!-- Main Container -->
     <div class="res-table-container">
         <?php
-        $q   = "SELECT * FROM lab_reservations WHERE status = '$status_tab' ORDER BY id DESC";
+        $q   = "SELECT * FROM lab_reservations WHERE status = '$status_tab'";
+        if ($date_filter) {
+            $q .= " AND reservation_date = '".mysqli_real_escape_string($con, $date_filter)."'";
+        }
+        $q .= " ORDER BY id DESC";
         $res = mysqli_query($con, $q);
 
         if (mysqli_num_rows($res) > 0): ?>
@@ -613,6 +631,15 @@ function updateStatus(id, newStatus) {
     });
 }
 
+function filterByDate(date) {
+    const url = new URL(window.location.href);
+    if (date) {
+        url.searchParams.set('date', date);
+    } else {
+        url.searchParams.delete('date');
+    }
+    window.location.href = url.toString();
+}
 
 </script>
 

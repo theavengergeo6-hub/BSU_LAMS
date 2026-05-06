@@ -863,7 +863,7 @@ $recent_res = mysqli_query($con, "SELECT * FROM lab_reservations ORDER BY create
         </div>
         <div class="dash-header-right">
             <div class="live-dot">Live</div>
-            <a href="reservations.php" class="btn-dash btn-dash-ghost">
+            <a href="requisitions.php" class="btn-dash btn-dash-ghost">
                 <i class="bi bi-list-ul"></i> All Requisitions
             </a>
             <a href="inventory.php" class="btn-dash btn-dash-primary">
@@ -922,7 +922,7 @@ $recent_res = mysqli_query($con, "SELECT * FROM lab_reservations ORDER BY create
                     <div class="panel-title-icon"><i class="bi bi-clock-history"></i></div>
                     Recent Requisitions
                 </div>
-                <a href="reservations.php" class="panel-link">
+                <a href="requisitions.php" class="panel-link">
                     View all <i class="bi bi-arrow-right"></i>
                 </a>
             </div>
@@ -1014,7 +1014,7 @@ $recent_res = mysqli_query($con, "SELECT * FROM lab_reservations ORDER BY create
                         </div>
                         <i class="bi bi-arrow-right quick-btn-arrow"></i>
                     </a>
-                    <a href="reservations.php" class="quick-btn">
+                    <a href="requisitions.php" class="quick-btn">
                         <div class="quick-btn-icon blue"><i class="bi bi-calendar-week"></i></div>
                         <div class="quick-btn-text">
                             <span class="quick-btn-label">Manage Schedule</span>
@@ -1022,7 +1022,7 @@ $recent_res = mysqli_query($con, "SELECT * FROM lab_reservations ORDER BY create
                         </div>
                         <i class="bi bi-arrow-right quick-btn-arrow"></i>
                     </a>
-                    <a href="reservations.php?status=Pending" class="quick-btn">
+                    <a href="requisitions.php?status=Pending" class="quick-btn">
                         <div class="quick-btn-icon teal"><i class="bi bi-hourglass"></i></div>
                         <div class="quick-btn-text">
                             <span class="quick-btn-label">Pending Requests</span>
