@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-    console.log("KLRS Global Helpers Loaded");
+    console.log("KTERS Global Helpers Loaded");
     
     // Navbar scroll effect
     const navbar = document.querySelector('.navbar');

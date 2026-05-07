@@ -36,8 +36,8 @@ if (isset($_GET['category_id'])) {
                              AND (r.stock_restored = 0 OR r.stock_restored IS NULL)
                              AND (LOWER(r.status) IN ('approved', 'ongoing', 'completed'))
                              AND (
-                                 -- Overlap logic: (NewStart < ExistEnd+3h) AND (NewEnd > ExistStart)
-                                 STR_TO_DATE('$start', '%H:%i') < DATE_ADD(STR_TO_DATE(r.reservation_end_time, '%H:%i'), INTERVAL 3 HOUR)
+                                 -- Overlap logic: (NewStart < ExistEnd) AND (NewEnd > ExistStart)
+                                 STR_TO_DATE('$start', '%H:%i') < STR_TO_DATE(r.reservation_end_time, '%H:%i')
                                  AND 
                                  STR_TO_DATE('$calc_end', '%H:%i') > STR_TO_DATE(r.reservation_time, '%H:%i')
                              )

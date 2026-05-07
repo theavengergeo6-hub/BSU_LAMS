@@ -38,7 +38,7 @@ require_once('../vendor/autoload.php');
 
 // ── Create PDF ───────────────────────────────────────────────────────────────
 $pdf = new TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
-$pdf->SetCreator('KLRS');
+$pdf->SetCreator('KTERS');
 $pdf->SetAuthor('BSU Kitchen Laboratory');
 $pdf->SetTitle('Laboratory Requisition Form — #' . $r['reservation_no']);
 $pdf->setPrintHeader(false);

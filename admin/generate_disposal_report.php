@@ -26,7 +26,7 @@ class MYPDF extends TCPDF {
 }
 
 $pdf = new MYPDF('P', 'mm', 'A4', true, 'UTF-8', false);
-$pdf->SetCreator('KLRS');
+$pdf->SetCreator('KTERS');
 $pdf->SetAuthor('Admin');
 $pdf->SetTitle('Disposal Report');
 $pdf->SetMargins(15, 50, 15);

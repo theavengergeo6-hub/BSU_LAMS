@@ -25,9 +25,9 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id'], $_POST['status'])
         $admin_id = $_SESSION['adminId'] ?? 1;
         $needs_restoration = false;
         
-        // When setting to Ongoing, start the 3-hour timer
+        // When setting to Ongoing, start the session
         if (strtolower($new_status) == 'ongoing') {
-            $update_fields .= ", ongoing_at = NOW(), cooldown_until = DATE_ADD(NOW(), INTERVAL 3 HOUR), stock_restored = 0";
+            $update_fields .= ", ongoing_at = NOW(), cooldown_until = NOW(), stock_restored = 0";
         }
         
         // Determine if we need to restore stock immediately (for Denied or Completed)

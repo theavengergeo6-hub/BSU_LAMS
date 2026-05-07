@@ -32,7 +32,7 @@
             <div class="col-lg-6 d-none d-lg-block">
                 <div class="hero-image-wrapper position-relative fade-in-up stagger-5">
                     <div class="hero-blob bg-danger opacity-20 position-absolute top-50 start-50 translate-middle" style="width: 500px; height: 500px; filter: blur(80px); border-radius: 40% 60% 70% 30% / 40% 40% 60% 50%; animation: blob-morph 8s infinite alternate;"></div>
-                    <img src="<?= BASE_URL ?>/assets/images/hero.png" alt="BSU KLRS" class="img-fluid rounded-5 shadow-2xl position-relative z-2" onerror="this.src='https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&w=1000&q=80'">
+                    <img src="<?= BASE_URL ?>/assets/images/hero.png" alt="KTERS" class="img-fluid rounded-5 shadow-2xl position-relative z-2" onerror="this.src='https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&w=1000&q=80'">
                     
                     <!-- Floating indicators -->
                     <div class="glass-card position-absolute p-3 rounded-4 shadow-lg floating" style="bottom: 10%; left: -5%; z-index: 3;">
@@ -54,7 +54,7 @@
 <!-- Features Section -->
 <div class="container py-5 overflow-hidden">
     <div class="text-center mb-5 fade-in-up">
-        <h2 class="display-5 fw-bold mb-3">Why Use <span class="text-danger">KLRS?</span></h2>
+        <h2 class="display-5 fw-bold mb-3">Why Use <span class="text-danger">KTERS?</span></h2>
         <p class="text-muted fs-5 mx-auto" style="max-width: 700px;">Our system is designed to provide the best possible experience for culinary students and instructors.</p>
     </div>
     
@@ -179,7 +179,7 @@ document.addEventListener("DOMContentLoaded", function() {
     <div class="cta-banner rounded-5 p-5 text-center text-white shadow-lg position-relative overflow-hidden" style="background: linear-gradient(rgba(204, 0, 0, 0.9), rgba(153, 0, 0, 0.9)), url('https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&w=1500&q=80'); background-size: cover; background-position: center;">
         <div class="position-relative z-1 py-4">
             <h2 class="display-4 fw-bold mb-4">Ready to start your lab session?</h2>
-            <p class="fs-4 mb-5 opacity-75 mx-auto" style="max-width: 600px;">Join hundreds of students already using KLRS to streamline their culinary education.</p>
+            <p class="fs-4 mb-5 opacity-75 mx-auto" style="max-width: 600px;">Join hundreds of students already using KTERS to streamline their culinary education.</p>
             <div class="d-flex justify-content-center gap-3">
                 <a href="<?= BASE_URL ?>/reserve.php" class="btn btn-light btn-lg px-5 py-3 fw-bold text-danger shadow-sm hover-scale">
                     Go to Request Page <i class="bi bi-arrow-right ms-2"></i>

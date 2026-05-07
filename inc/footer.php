@@ -2,9 +2,9 @@
 <div class="container-fluid bg-white mt-5">
     <div class="row">
         <div class="col-lg-8 p-4">
-            <h4 class="fw-bold fs-4 mb-2 text-danger">KLRS</h4>
+            <h4 class="fw-bold fs-4 mb-2 text-danger">KTERS</h4>
             <p>
-                Kitchen Laboratory Requisition System for the Hot Kitchen, Cold Kitchen, Food & Beverage Services, and
+                BatStateU ARASOF-Nasugbu Kitchen Tools and Equipment Requisition System for the Hot Kitchen, Cold Kitchen, Food & Beverage Services, and
                 Laundry facilities of Batangas State University.
             </p>
         </div>

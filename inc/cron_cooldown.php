@@ -15,7 +15,7 @@ function runCooldownCron($con) {
         FROM lab_reservations
         WHERE (status IN ('Approved', 'Ongoing', 'Completed'))
           AND (stock_restored = 0 OR stock_restored IS NULL)
-          AND DATE_ADD(STR_TO_DATE(CONCAT(reservation_date, ' ', reservation_end_time), '%Y-%m-%d %H:%i'), INTERVAL 3 HOUR) <= NOW()
+          AND STR_TO_DATE(CONCAT(reservation_date, ' ', reservation_end_time), '%Y-%m-%d %H:%i') <= NOW()
     ";
     
     $res = mysqli_query($con, $query);

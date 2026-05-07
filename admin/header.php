@@ -19,7 +19,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - KLRS</title>
+    <title>Admin Dashboard - KTERS</title>
     <?php require('../inc/link.php'); ?>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -218,7 +218,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <h2>KLRS</h2>
+            <h2>KTERS</h2>
             <p>Admin Control Panel</p>
         </div>
         <nav class="sidebar-nav">
