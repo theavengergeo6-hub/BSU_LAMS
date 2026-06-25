@@ -1,6 +1,17 @@
 <?php
+/**
+ * BSU Kitchen Laboratory Requisition System - Client Booking Page
+ * 
+ * Provides a responsive booking interface for students to reserve kitchen equipment.
+ * Key Features:
+ * - Session/Timeslot-aware catalog: checks stock availability in real-time based on selected date/time window.
+ * - Multi-variant item grouping: combines items of the same type but different sizes into a single selection card.
+ * - Sticky Cart and Mobile Drawer: offers a responsive interface for desktop sidebars and mobile drawers.
+ * - Client-side state caching: uses SessionStorage to prevent data loss on page refresh.
+ */
 require('inc/header.php');
 
+// Fetch all available laboratory categories from the database for navigation tabs
 $cat_res = mysqli_query($con, "SELECT * FROM lab_categories");
 $categories = [];
 while ($row = mysqli_fetch_assoc($cat_res)) {
@@ -888,7 +899,8 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
                 <div class="form-row">
                     <div class="field">
                         <label>Full Name <span class="req">*</span></label>
-                        <input type="text" id="req_name" oninput="saveFormData()" onblur="capitalizeInput(this); saveFormData()">
+                        <input type="text" id="req_name" oninput="saveFormData()"
+                            onblur="capitalizeInput(this); saveFormData()">
                     </div>
                     <div class="field">
                         <label>Email Address</label>
@@ -900,7 +912,8 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
                     </div>
                     <div class="field">
                         <label>Course &amp; Section <span class="req">*</span></label>
-                        <input type="text" id="req_course" oninput="saveFormData()" onblur="capitalizeInput(this); saveFormData()">
+                        <input type="text" id="req_course" oninput="saveFormData()"
+                            onblur="capitalizeInput(this); saveFormData()">
                     </div>
                 </div>
             </div>
@@ -916,7 +929,8 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
                 <div class="form-row">
                     <div class="field">
                         <label>Subject Code / Name <span class="req">*</span></label>
-                        <input type="text" id="req_subject" oninput="saveFormData()" onblur="capitalizeInput(this); saveFormData()">
+                        <input type="text" id="req_subject" oninput="saveFormData()"
+                            onblur="capitalizeInput(this); saveFormData()">
                     </div>
                     <div class="field">
                         <label>Station Setup <span class="req">*</span></label>
@@ -928,7 +942,8 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
                     </div>
                     <div class="field">
                         <label>Date <span class="req">*</span></label>
-                        <input type="date" id="req_date" min="<?= date('Y-m-d') ?>" onchange="saveFormData(); reloadItemsForTimeslot();">
+                        <input type="date" id="req_date" min="<?= date('Y-m-d') ?>"
+                            onchange="saveFormData(); reloadItemsForTimeslot();">
                     </div>
                     <div class="field">
                         <label>Time (7AM – 5PM) <span class="req">*</span></label>
@@ -969,8 +984,10 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
                 <h2>Select Items to Borrow</h2>
             </div>
             <!-- Time-slot notice -->
-            <div id="timeslot-notice" style="margin:0 24px 0;padding:10px 14px;background:#fff8e1;border-left:4px solid #f9a825;border-radius:6px;font-size:0.83rem;color:#795548;display:none;">
-                <i class="bi bi-clock me-1"></i> Availability updates automatically based on your selected <strong>date and time</strong>.
+            <div id="timeslot-notice"
+                style="margin:0 24px 0;padding:10px 14px;background:#fff8e1;border-left:4px solid #f9a825;border-radius:6px;font-size:0.83rem;color:#795548;display:none;">
+                <i class="bi bi-clock me-1"></i> Availability updates automatically based on your selected <strong>date
+                    and time</strong>.
             </div>
 
             <!-- Category tabs -->
@@ -1085,19 +1102,38 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
 
 
 <script>
-    // ── State ─────────────────────────────────────────────
-    let labCart = {};   // { itemId: { name, qty, max, catId } }
-    let loadedCats = {};   // { catId: true }
-    let catData = {};   // { catId: [...items] }  — raw cache for search
-    let catNames = {};   // { catId: 'Display Name' }
+    // ── Client-Side State Management ─────────────────────────────────────────────
+    /**
+     * Stores items currently added to the reservation cart.
+     * Format: { itemId: { name: string, qty: number, max: number, catId: number } }
+     */
+    let labCart = {};
+
+    /** Tracking object to record which category tabs have loaded their items via AJAX. { catId: boolean } */
+    let loadedCats = {};
+
+    /** Cache of item data fetched for each category. Used for local search filtering. { catId: Array } */
+    let catData = {};
+
+    /** Maps category IDs to display names for wrong-category suggestion routing. { catId: string } */
+    let catNames = {};
+
+    /** The ID of the category currently active in the UI layout view. */
     let activeCatId = null;
 
+    /**
+     * Enforces the maximum available stock limit on numeric input fields.
+     * If the user attempts to enter a quantity greater than stock, the value is reset
+     * to the max limit, and a temporary warning notice is displayed.
+     * 
+     * @param {HTMLInputElement} input The quantity input element being validated.
+     */
     function enforceMax(input) {
         let val = parseInt(input.value);
         let max = parseInt(input.max);
         const warningId = 'warning-' + input.id.split('-')[1];
         let warningEl = document.getElementById(warningId);
-        
+
         if (val > max) {
             input.value = max;
             if (!warningEl) {
@@ -1108,47 +1144,63 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
                 warningEl.style.marginTop = '2px';
                 warningEl.textContent = 'Only ' + max + ' available';
                 input.parentNode.appendChild(warningEl);
-                setTimeout(() => warningEl.remove(), 2000);
+                setTimeout(() => warningEl.remove(), 2000); // Disappear after 2 seconds
             }
         }
-        if (val < 1 && input.value !== "") input.value = 1;
+        if (val < 1 && input.value !== "") input.value = 1; // Enforce minimum of 1 item
     }
 
+    /**
+     * Restricts the end-time dropdown selector choices based on the chosen start-time.
+     * Disables any time slot that precedes or matches the start-time.
+     * Resets the selected end-time value if it becomes invalid.
+     */
     function updateEndTimeMin() {
         const startTime = document.getElementById('req_time').value;
         const endTimeSelect = document.getElementById('req_end_time');
         if (!startTime) return;
-        
+
         const [h, m] = startTime.split(':').map(Number);
         const startTotalMin = h * 60 + m;
-        
+
+        // Loop through end-time options and disable slots that are less than or equal to start-time
         Array.from(endTimeSelect.options).forEach(opt => {
             if (!opt.value) return;
             const [oh, om] = opt.value.split(':').map(Number);
             const optTotalMin = oh * 60 + om;
             opt.disabled = optTotalMin <= startTotalMin;
         });
-        
+
+        // Reset selected end-time if it falls in the now-disabled range
         if (endTimeSelect.value) {
             const [eh, em] = endTimeSelect.value.split(':').map(Number);
             if (eh * 60 + em <= startTotalMin) endTimeSelect.value = "";
         }
     }
 
-    // Seed category names from PHP
+    // Seed category names from PHP array data into the local JS map object
     const allCategories = <?= json_encode(array_map(fn($c) => ['id' => (int) $c['id'], 'name' => $c['name']], $categories)) ?>;
     allCategories.forEach(c => { catNames[c.id] = c.name; });
 
-    // ── Init ──────────────────────────────────────────────
+    // ── Application Initialization ──────────────────────────────────────────────
     document.addEventListener('DOMContentLoaded', () => {
+        // Load the default first category tab immediately
         <?php if (count($categories) > 0): ?>
             activeCatId = <?= (int) $categories[0]['id'] ?>;
             loadCategory(activeCatId);
         <?php endif; ?>
+        // Restore form fields and cart items from session storage cache
         loadFormData();
     });
 
-    // ── Category switch ───────────────────────────────────
+    // ── Category Navigation and Tab Switching ───────────────────────────────────
+    /**
+     * Switched active category pane tab in the UI.
+     * Hides other category items, updates active button styles, and triggers item load.
+     * 
+     * @param {number} catId The unique ID of the target category.
+     * @param {HTMLButtonElement} btn The category tab element clicked.
+     */
     function switchCategory(catId, btn) {
         document.querySelectorAll('[id^="items-pane-"]').forEach(p => p.style.display = 'none');
         document.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
@@ -1156,20 +1208,28 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
         btn.classList.add('active');
         activeCatId = catId;
 
-        // Clear search input on tab switch
+        // Reset search field when switching category tabs to avoid UI confusion
         document.getElementById('items-search').value = '';
 
         loadCategory(catId);
     }
 
-    // ── Load items via AJAX (time-slot-aware) ────────────────────────────
+    // ── Asynchronous Inventory Fetching (Timeslot-Aware) ────────────────────────
+    /**
+     * Fetches item records from the server via AJAX for a category.
+     * If date and time filters are active, the backend adjusts quantity counts
+     * to reflect reservations active during that period.
+     * 
+     * @param {number} catId The unique ID of the category to load.
+     */
     function loadCategory(catId) {
-        if (loadedCats[catId]) return;
+        if (loadedCats[catId]) return; // Use local cache if already loaded
 
         const date = document.getElementById('req_date')?.value || '';
         const time = document.getElementById('req_time')?.value || '';
         const endTime = document.getElementById('req_end_time')?.value || '';
         const params = new URLSearchParams({ category_id: catId });
+
         if (date) params.append('date', date);
         if (time) params.append('time', time);
         if (endTime) params.append('end_time', endTime);
@@ -1177,8 +1237,8 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
         fetch(`ajax/get_items_by_category.php?${params.toString()}`)
             .then(r => r.json())
             .then(data => {
-                catData[catId] = data;
-                loadedCats[catId] = true;
+                catData[catId] = data;      // Cache the raw data
+                loadedCats[catId] = true;   // Mark category as loaded
                 renderItems(catId, data);
             })
             .catch(() => {
@@ -1187,21 +1247,26 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
             });
     }
 
-    // ── Reload all items when date or time changes ────────────────────────
+    // ── Timeslot Changes Event Handler ──────────────────────────────────────────
+    /**
+     * Triggers whenever the booking date, start time, or end time modifications occur.
+     * Availability values are specific to the timeslot, so we clear the cached
+     * inventory data, reset loaded states, and reload the active category tab.
+     */
     function reloadItemsForTimeslot() {
         const date = document.getElementById('req_date')?.value || '';
         const time = document.getElementById('req_time')?.value || '';
         const endTime = document.getElementById('req_end_time')?.value || '';
 
-        // Show the timeslot notice once date and start time are selected
+        // Show the timeslot helper notice once date and start time are set
         const notice = document.getElementById('timeslot-notice');
         if (notice) notice.style.display = (date && time) ? 'block' : 'none';
 
-        // Bust the item cache so every category reloads with fresh availability
+        // Clear local caches to force query of updated availability quantities
         loadedCats = {};
         catData = {};
 
-        // Reload only the currently visible pane immediately
+        // Immediately update the currently active pane with a loading spinner
         if (activeCatId) {
             document.getElementById('items-pane-' + activeCatId).innerHTML =
                 '<div class="items-loading"><div class="spinner"></div> Updating availability…</div>';
@@ -1209,25 +1274,32 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
         }
     }
 
-    // ── Search ────────────────────────────────────────────
+    // ── Real-time Search and Autocomplete Logic ─────────────────────────────────
+    /**
+     * Handles search input keyup/change events.
+     * Filters items locally in the active tab. If no matches are found, it queries other 
+     * loaded categories to suggest appropriate tab links to the student.
+     * 
+     * @param {string} raw The raw input search text.
+     */
     function handleSearch(raw) {
         const query = raw.trim().toLowerCase();
         if (!activeCatId) return;
-        if (!loadedCats[activeCatId]) return;   // not loaded yet
+        if (!loadedCats[activeCatId]) return; // Ensure category pane has finished loading
 
         const data = catData[activeCatId] || [];
 
-        // Empty query — restore full list
+        // Empty query: restore the default full listing for the category
         if (!query) { renderItems(activeCatId, data); return; }
 
-        // Filter within active category
+        // Filter items that match the user's query
         const matched = data.filter(item =>
             item.item_name.toLowerCase().includes(query)
         );
 
         if (matched.length > 0) { renderItems(activeCatId, matched); return; }
 
-        // Not found here — look in other already-loaded categories for suggestions
+        // Not found in active tab: search already-loaded cache for potential matches
         const foundIn = allCategories.filter(cat =>
             cat.id != activeCatId &&
             (catData[cat.id] || []).some(item =>
@@ -1238,6 +1310,13 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
         showWrongCatMessage(query, foundIn);
     }
 
+    /**
+     * Renders a warning message when a search query yields no matches in the active tab.
+     * If the item is located in another tab, renders redirection button pills.
+     * 
+     * @param {string} query The search string entered.
+     * @param {Array} foundIn Array of categories containing matches.
+     */
     function showWrongCatMessage(query, foundIn) {
         const pane = document.getElementById('items-pane-' + activeCatId);
         const activeName = catNames[activeCatId] || 'this category';
@@ -1253,14 +1332,19 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
 
         pane.innerHTML = `
         <div class="wrong-cat-msg">
-            <i class="bi bi-search wc-icon"></i>
-            <div class="wc-title">No results in &ldquo;${activeName}&rdquo;</div>
-            <p class="wc-hint">&ldquo;${query}&rdquo; was not found here.</p>
-            ${pillsHtml}
+             <i class="bi bi-search wc-icon"></i>
+             <div class="wc-title">No results in &ldquo;${activeName}&rdquo;</div>
+             <p class="wc-hint">&ldquo;${query}&rdquo; was not found here.</p>
+             ${pillsHtml}
         </div>`;
     }
 
-    // Jump to suggested category and re-run search
+    /**
+     * Redirects the user to a suggested category tab and restores their search query
+     * so they don't have to retype it.
+     * 
+     * @param {number} catId The suggested category ID to jump to.
+     */
     function jumpToCategory(catId) {
         const btn = document.querySelector(`.cat-tab[data-cat="${catId}"]`);
         if (!btn) return;
@@ -1283,42 +1367,51 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
         }
     }
 
-    // ── Render item cards ─────────────────────────────────
-    function renderItems(catId, data) {
-        const pane = document.getElementById('items-pane-' + catId);
-        if (!data || !data.length) {
-            pane.innerHTML = '<div class="items-loading">No items in this category.</div>';
-            return;
-        }
+    // ── Dynamic Catalog Rendering and Grouping ──────────────────────────────────
+            /**
+             * Renders inventory item cards dynamically into the HTML grid.
+             * Implements a grouping algorithm to collapse items of the same base type
+             * (differing only by dimensions or specs in parentheses) into a single variant card.
+             * 
+             * @param {number} catId The active category tab ID.
+             * @param {Array} data Array of item records to render.
+             */
+            function renderItems(catId, data) {
+                const pane = document.getElementById('items-pane-' + catId);
+                if (!data || !data.length) {
+                    pane.innerHTML = '<div class="items-loading">No items in this category.</div>';
+                    return;
+                }
 
-        // ── Grouping Logic ──
-        let groups = {}; // { baseName: [items] }
-        data.forEach(item => {
-            // Robust prefix/suffix stripping
-            // 1. Strip "(...)"
-            let name = item.item_name.split(' (')[0].trim();
-            // 2. Strip leading dimensions like "2' ", "6oz ", etc
-            // Ensure we only strip if it's NOT just the dimension itself
-            let base = name;
-            if (name.match(/^\d+['"]\s+/)) {
-                base = name.replace(/^\d+['"]\s+/, '').trim();
-            } else if (name.match(/^\d+oz\s+/)) {
-                base = name.replace(/^\d+oz\s+/, '').trim();
-            }
+                // ── Grouping Algorithm ──
+                // Maps base names (e.g., "Sauce Pan") to their constituent variants (e.g., "12in Sauce Pan", "6in Sauce Pan")
+                let groups = {}; // { baseName: [items] }
+                data.forEach(item => {
+                    // Normalize name:
+                    // 1. Strip specifications wrapped in parentheses: e.g. "Mixing Bowl (Large)" -> "Mixing Bowl"
+                    let name = item.item_name.split(' (')[0].trim();
+                    // 2. Strip leading dimensions (e.g. "2' ", "6oz ") to group items with sizes
+                    let base = name;
+                    if (name.match(/^\d+['"]\s+/)) {
+                        base = name.replace(/^\d+['"]\s+/, '').trim();
+                    } else if (name.match(/^\d+oz\s+/)) {
+                        base = name.replace(/^\d+oz\s+/, '').trim();
+                    }
 
-            if (!groups[base]) groups[base] = [];
-            groups[base].push(item);
-        });
+                    if (!groups[base]) groups[base] = [];
+                    groups[base].push(item);
+                });
 
-        pane.innerHTML = Object.entries(groups).map(([base, items]) => {
-            if (items.length > 1) {
-                // Render a single card for the group
-                const item = items[0]; // representative data
-                const img = item.image_path ? `uploads/lab_items/${item.image_path}` : 'assets/images/placeholder.png';
-                const totalAvail = items.reduce((sum, i) => sum + parseInt(i.available_quantity), 0);
-                const allOos = totalAvail <= 0;
+                // Loop over grouped items and build catalog HTML
+                pane.innerHTML = Object.entries(groups).map(([base, items]) => {
+                    if (items.length > 1) {
+                        // MULTI-VARIANT CARD: Render a card that links to a size selection modal
+                        const item = items[0]; // Representative item details (image, etc.)
+                        const img = item.image_path ? `uploads/lab_items/${item.image_path}` : 'assets/images/placeholder.png';
+                        const totalAvail = items.reduce((sum, i) => sum + parseInt(i.available_quantity), 0);
+                        const allOos = totalAvail <= 0;
 
-                return `
+                        return `
                 <div class="item-card${allOos ? ' out-of-stock' : ''}">
                     <img src="${img}" alt="${base}" onerror="this.src='assets/images/placeholder.png'">
                     <div class="item-card-body">
@@ -1332,15 +1425,16 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
                         </button>
                     </div>
                 </div>`;
-            } else {
-                // Render normal individual card
-                const item = items[0];
-                const img = item.image_path ? `uploads/lab_items/${item.image_path}` : 'assets/images/placeholder.png';
-                const avail = parseInt(item.available_quantity);
-                const oos = avail <= 0;
-                const inCart = labCart[item.id] != null;
-                const safe = item.item_name.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-                return `
+                    } else {
+                        // SINGLE-ITEM CARD: Render a standard catalog card with quantity selector
+                        const item = items[0];
+                        const img = item.image_path ? `uploads/lab_items/${item.image_path}` : 'assets/images/placeholder.png';
+                        const avail = parseInt(item.available_quantity);
+                        const oos = avail <= 0;
+                        const inCart = labCart[item.id] != null;
+                        const safe = item.item_name.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
+                        return `
                 <div class="item-card${oos ? ' out-of-stock' : ''}" id="item-card-${item.id}">
                     <img src="${img}" alt="${item.item_name}" onerror="this.src='assets/images/placeholder.png'">
                     <div class="item-card-body">
@@ -1362,43 +1456,51 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
                         <button class="btn-add" disabled>Unavailable at this moment</button>`}
                     </div>
                 </div>`;
+                    }
+                }).join('');
             }
-        }).join('');
-    }
 
-    // ── Variant Modal Logic ───────────────────────────────
+    // ── Variant Modal Management ───────────────────────────
+    /**
+     * Opens the variant modal to allow selection of specific sizes/types for grouped items.
+     * Parses the current category dataset to find and display matching variants.
+     * 
+     * @param {string} baseName The normalized base name of the equipment group.
+     * @param {number} catId The active category tab ID.
+     */
     function openVariantModal(baseName, catId) {
-        const modal = document.getElementById('variant-modal');
-        const title = document.getElementById('modal-base-name');
-        const list = document.getElementById('variant-list');
+                const modal = document.getElementById('variant-modal');
+                const title = document.getElementById('modal-base-name');
+                const list = document.getElementById('variant-list');
 
-        title.textContent = baseName;
-        list.innerHTML = '';
+                title.textContent = baseName;
+                list.innerHTML = '';
 
-        // Find variants in catData by matching the base name (post-stripping)
-        const variants = (catData[catId] || []).filter(item => {
-            let name = item.item_name.split(' (')[0].trim();
-            let base = name.replace(/^\d+['"]\s+/, '').replace(/^\d+oz\s+/, '').trim();
-            return base === baseName;
-        });
+                // Retrieve items from cache that share the same base name
+                const variants = (catData[catId] || []).filter(item => {
+                    let name = item.item_name.split(' (')[0].trim();
+                    let base = name.replace(/^\d+['"]\s+/, '').replace(/^\d+oz\s+/, '').trim();
+                    return base === baseName;
+                });
 
-        list.innerHTML = variants.map(v => {
-            const avail = parseInt(v.available_quantity);
-            const inCart = labCart[v.id] != null;
-            const oos = avail <= 0;
-            const safe = v.item_name.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                // Build options inside the modal list
+                list.innerHTML = variants.map(v => {
+                    const avail = parseInt(v.available_quantity);
+                    const inCart = labCart[v.id] != null;
+                    const oos = avail <= 0;
+                    const safe = v.item_name.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
-            // For the title in the modal, show the part that makes it unique (the size/spec)
-            let uniquePart = v.item_name;
-            if (v.item_name.includes('(')) {
-                uniquePart = v.item_name.split('(')[1].replace(')', '').trim();
-            } else if (v.item_name.match(/^\d+['"]\s+/)) {
-                uniquePart = v.item_name.match(/^\d+['"]/)[0];
-            } else if (v.item_name.match(/^\d+oz\s+/)) {
-                uniquePart = v.item_name.match(/^\d+oz/)[0];
-            }
+                    // Extract the unique part of the variant name (e.g. "Large", "8in", "6oz") for cleaner modal rendering
+                    let uniquePart = v.item_name;
+                    if (v.item_name.includes('(')) {
+                        uniquePart = v.item_name.split('(')[1].replace(')', '').trim();
+                    } else if (v.item_name.match(/^\d+['"]\s+/)) {
+                        uniquePart = v.item_name.match(/^\d+['"]/)[0];
+                    } else if (v.item_name.match(/^\d+oz\s+/)) {
+                        uniquePart = v.item_name.match(/^\d+oz/)[0];
+                    }
 
-            return `
+                    return `
             <div class="variant-item">
                 <div class="variant-info">
                     <div class="variant-title">${uniquePart}</div>
@@ -1414,101 +1516,102 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
                     ` : `<span class="text-danger small fw-bold">Unavailable at this moment</span>`}
                 </div>
             </div>`;
-        }).join('');
+                }).join('');
 
-        modal.style.display = 'flex';
-    }
+                modal.style.display = 'flex';
+            }
 
     function closeVariantModal() {
-        document.getElementById('variant-modal').style.display = 'none';
-    }
+                document.getElementById('variant-modal').style.display = 'none';
+            }
 
     function toggleVariantInCart(id, name, max, catId) {
-        const qInput = document.getElementById('vqty-' + id);
-        const qty = qInput ? parseInt(qInput.value) : 1;
+                const qInput = document.getElementById('vqty-' + id);
+                const qty = qInput ? parseInt(qInput.value) : 1;
 
-        if (labCart[id]) {
-            delete labCart[id];
-            const btn = document.getElementById('vaddbtn-' + id);
-            if (btn) { btn.classList.remove('added'); btn.innerHTML = 'Add'; }
-        } else {
-            labCart[id] = { name, qty: Math.min(qty, max), max, catId };
-            const btn = document.getElementById('vaddbtn-' + id);
-            if (btn) { btn.classList.add('added'); btn.innerHTML = 'Added'; }
-        }
-        saveFormData();
-        renderCart();
-    }
+                if (labCart[id]) {
+                    delete labCart[id];
+                    const btn = document.getElementById('vaddbtn-' + id);
+                    if (btn) { btn.classList.remove('added'); btn.innerHTML = 'Add'; }
+                } else {
+                    labCart[id] = { name, qty: Math.min(qty, max), max, catId };
+                    const btn = document.getElementById('vaddbtn-' + id);
+                    if (btn) { btn.classList.add('added'); btn.innerHTML = 'Added'; }
+                }
+                saveFormData();
+                renderCart();
+            }
 
     window.onclick = function (event) {
-        const modal = document.getElementById('variant-modal');
-        if (event.target == modal) { modal.style.display = 'none'; }
-    }
+                const modal = document.getElementById('variant-modal');
+                if (event.target == modal) { modal.style.display = 'none'; }
+            }
 
     // ── Cart ──────────────────────────────────────────────
     function toggleCart(itemId, itemName, maxQty, catId) {
-        if (labCart[itemId]) { removeFromCart(itemId, event); }
-        else { addToCart(itemId, itemName, maxQty, catId); }
-    }
+                if (labCart[itemId]) { removeFromCart(itemId, event); }
+                else { addToCart(itemId, itemName, maxQty, catId); }
+            }
 
     function addToCart(itemId, itemName, maxQty, catId) {
-        const qtyInput = document.getElementById('qty-' + itemId);
-        const qty = qtyInput ? Math.min(parseInt(qtyInput.value) || 1, maxQty) : 1;
-        labCart[itemId] = { name: itemName, qty, max: maxQty, catId };
+                const qtyInput = document.getElementById('qty-' + itemId);
+                const qty = qtyInput ? Math.min(parseInt(qtyInput.value) || 1, maxQty) : 1;
+                labCart[itemId] = { name: itemName, qty, max: maxQty, catId };
 
-        const btn = document.getElementById('addbtn-' + itemId);
-        if (btn) { btn.classList.add('added'); btn.innerHTML = '<i class="bi bi-cart-check"></i> Added'; }
-        saveFormData();
-        renderCart();
-    }
+                const btn = document.getElementById('addbtn-' + itemId);
+                if (btn) { btn.classList.add('added'); btn.innerHTML = '<i class="bi bi-cart-check"></i> Added'; }
+                saveFormData();
+                renderCart();
+            }
 
     function removeFromCart(itemId, e = null) {
-        if (e) { e.preventDefault(); e.stopPropagation(); }
-        delete labCart[itemId];
+                if (e) { e.preventDefault(); e.stopPropagation(); }
+                delete labCart[itemId];
 
-        const btn = document.getElementById('addbtn-' + itemId);
-        if (btn) { btn.classList.remove('added'); btn.innerHTML = '<i class="bi bi-cart-plus"></i> Add to Cart'; }
+                const btn = document.getElementById('addbtn-' + itemId);
+                if (btn) { btn.classList.remove('added'); btn.innerHTML = '<i class="bi bi-cart-plus"></i> Add to Cart'; }
 
-        const vbtn = document.getElementById('vaddbtn-' + itemId);
-        if (vbtn) { vbtn.classList.remove('added'); vbtn.innerHTML = 'Add'; }
+                const vbtn = document.getElementById('vaddbtn-' + itemId);
+                if (vbtn) { vbtn.classList.remove('added'); vbtn.innerHTML = 'Add'; }
 
-        saveFormData();
-        renderCart();
-    }
+                saveFormData();
+                renderCart();
+            }
 
     function renderCart() {
-        const keys = Object.keys(labCart);
-        const empty = document.getElementById('cart-empty');
-        const list = document.getElementById('cart-list');
-        const count = document.getElementById('cart-count-row');
+                const keys = Object.keys(labCart);
+                const empty = document.getElementById('cart-empty');
+                const list = document.getElementById('cart-list');
+                const count = document.getElementById('cart-count-row');
 
-        if (!keys.length) {
-            empty.style.display = 'block';
-            list.innerHTML = '';
-            count.style.display = 'none';
-            document.getElementById('mobile-cart-count').textContent = '0';
-            document.getElementById('drawer-list').innerHTML = '';
-            document.getElementById('mobile-submit-bar').classList.remove('active');
-            document.getElementById('mobile-cart-drawer').classList.remove('open');
-            document.getElementById('cart-drawer-overlay').classList.remove('open');
-            return;
-        }
+                if (!keys.length) {
+                    empty.style.display = 'block';
+                    list.innerHTML = '';
+                    count.style.display = 'none';
+                    document.getElementById('mobile-cart-count').textContent = '0';
+                    document.getElementById('drawer-list').innerHTML = '';
+                    document.getElementById('mobile-submit-bar').classList.remove('active');
+                    document.getElementById('mobile-cart-drawer').classList.remove('open');
+                    document.getElementById('cart-drawer-overlay').classList.remove('open');
+                    return;
+                }
 
-        empty.style.display = 'none';
-        count.style.display = 'block';
-        document.getElementById('cart-count').textContent = keys.length;
-        document.getElementById('mobile-cart-count').textContent = keys.length;
+                empty.style.display = 'none';
+                count.style.display = 'block';
+                document.getElementById('cart-count').textContent = keys.length;
+                document.getElementById('mobile-cart-count').textContent = keys.length;
 
-        // Toggle mobile bar
-        const mBar = document.getElementById('mobile-submit-bar');
-        if (keys.length > 0) mBar.classList.add('active');
-        else {
-            mBar.classList.remove('active');
-            document.getElementById('mobile-cart-drawer').classList.remove('open');
-            document.getElementById('cart-drawer-overlay').classList.remove('open');
-        }
+                // Display the floating sticky checkout panel for mobile devices
+                const mBar = document.getElementById('mobile-submit-bar');
+                if (keys.length > 0) mBar.classList.add('active');
+                else {
+                    mBar.classList.remove('active');
+                    document.getElementById('mobile-cart-drawer').classList.remove('open');
+                    document.getElementById('cart-drawer-overlay').classList.remove('open');
+                }
 
-        const itemsHtml = keys.map(id => `
+                // Map cart items into HTML rows
+                const itemsHtml = keys.map(id => `
         <div class="cart-item">
             <div>
                 <div class="cart-item-name">${labCart[id].name}</div>
@@ -1519,183 +1622,203 @@ while ($row = mysqli_fetch_assoc($cat_res)) {
             </button>
         </div>`).join('');
 
-        list.innerHTML = itemsHtml;
-        document.getElementById('drawer-list').innerHTML = itemsHtml;
-    }
+                list.innerHTML = itemsHtml;
+                document.getElementById('drawer-list').innerHTML = itemsHtml;
+            }
 
+    /** Toggles the sliding mobile checkout bottom sheet drawer. */
     function toggleCartDrawer() {
-        const drawer = document.getElementById('mobile-cart-drawer');
-        const overlay = document.getElementById('cart-drawer-overlay');
-        drawer.classList.toggle('open');
-        overlay.classList.toggle('open');
-    }
+                const drawer = document.getElementById('mobile-cart-drawer');
+                const overlay = document.getElementById('cart-drawer-overlay');
+                drawer.classList.toggle('open');
+                overlay.classList.toggle('open');
+            }
 
-    // ── Validate & submit ─────────────────────────────────
+    // ── Form Validation & Submission ─────────────────────────
+    /**
+     * Displays a system notification toast for user feedback.
+     * 
+     * @param {string} msg Text message to display.
+     * @param {string} type Alert visual class ('error' or 'success').
+     */
     function showAlert(msg, type) {
-        const el = document.getElementById('form-alert');
-        el.textContent = msg;
-        el.className = 'r-alert ' + type;
-        el.style.display = 'block';
-        setTimeout(() => { el.style.display = 'none'; }, 4500);
-    }
+                const el = document.getElementById('form-alert');
+                el.textContent = msg;
+                el.className = 'r-alert ' + type;
+                el.style.display = 'block';
+                setTimeout(() => { el.style.display = 'none'; }, 4500);
+            }
 
+    /**
+     * Conducts form field verification, packages reservation parameters,
+     * and submits reservation data asynchronously via AJAX post request.
+     */
     function submitReservation() {
-        const submitBtns = document.querySelectorAll('.btn-submit');
-        const enableBtns = () => {
-            submitBtns.forEach(btn => {
-                btn.disabled = false;
-                if(btn.dataset.originalHTML) btn.innerHTML = btn.dataset.originalHTML;
-            });
-        };
+                const submitBtns = document.querySelectorAll('.btn-submit');
 
-        // Disable to prevent multiple clicks
-        submitBtns.forEach(btn => {
-            if(!btn.disabled) {
-                btn.dataset.originalHTML = btn.innerHTML;
-                btn.disabled = true;
-                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Processing...';
-            }
-        });
-
-        const fields = [
-            { id: 'req_name', label: 'Full Name' },
-            { id: 'req_course', label: 'Course & Section' },
-            { id: 'req_subject', label: 'Subject' },
-            { id: 'req_station', label: 'Station Setup' },
-            { id: 'req_batch', label: 'Batch No.' },
-            { id: 'req_date', label: 'Date' },
-            { id: 'req_time', label: 'Start Time' },
-            { id: 'req_end_time', label: 'End Time' },
-        ];
-
-        for (const f of fields) {
-            const el = document.getElementById(f.id);
-            if (!el.value.trim()) {
-                el.focus();
-                el.style.borderColor = 'var(--red)';
-                setTimeout(() => el.style.borderColor = '', 2000);
-                showAlert(`Please fill in: ${f.label}`, 'error');
-                enableBtns();
-                return;
-            }
-        }
-
-        if (!Object.keys(labCart).length) {
-            showAlert('Please add at least one item to your requisition.', 'error');
-            enableBtns();
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append('name', document.getElementById('req_name').value.trim());
-        formData.append('email', document.getElementById('req_email').value.trim());
-        formData.append('contact', document.getElementById('req_contact').value.trim());
-        formData.append('course', document.getElementById('req_course').value.trim());
-        formData.append('subject', document.getElementById('req_subject').value.trim());
-        formData.append('station', document.getElementById('req_station').value.trim());
-        formData.append('batch', document.getElementById('req_batch').value.trim());
-        formData.append('date', document.getElementById('req_date').value);
-        formData.append('time', document.getElementById('req_time').value);
-        formData.append('end_time', document.getElementById('req_end_time').value);
-
-        const cartObj = {};
-        Object.entries(labCart).forEach(([id, v]) => {
-            cartObj[id] = { quantity: v.qty };
-        });
-        formData.append('cart', JSON.stringify(cartObj));
-
-        fetch('ajax/reservation_submit.php', {
-            method: 'POST',
-            body: formData
-        })
-            .then(async r => {
-                const text = await r.text();
-                try {
-                    return JSON.parse(text);
-                } catch (e) {
-                    console.error('Server response was not JSON:', text);
-                    throw new Error('Invalid JSON response from server');
-                }
-            })
-            .then(res => {
-                enableBtns();
-                if (res.status === 'success') {
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Requisition Submitted!',
-                            text: 'Your request has been sent to the lab custodian for review. You can track its status in the My Requisitions page.',
-                            confirmButtonColor: '#C0392B'
-                        });
-                    } else {
-                        showAlert('Requisition submitted! You will be notified once approved.', 'success');
-                    }
-                    
-                    labCart = {};
-                    sessionStorage.removeItem('reserve_form_data');
-                    sessionStorage.removeItem('reserve_cart');
-                    renderCart();
-                    document.querySelectorAll('.btn-add.added').forEach(b => {
-                        b.classList.remove('added');
-                        b.innerHTML = '<i class="bi bi-cart-plus"></i> Add to Cart';
+                // Re-enables submit buttons and restores original text content
+                const enableBtns = () => {
+                    submitBtns.forEach(btn => {
+                        btn.disabled = false;
+                        if (btn.dataset.originalHTML) btn.innerHTML = btn.dataset.originalHTML;
                     });
-                    ['req_name', 'req_email', 'req_contact', 'req_course',
-                        'req_subject', 'req_station', 'req_batch', 'req_date'].forEach(id => {
-                            document.getElementById(id).value = '';
-                        });
-                    document.getElementById('req_time').selectedIndex = 0;
-                } else {
-                    showAlert(res.status === 'error' ? res.message : 'Something went wrong. Please try again.', 'error');
+                };
+
+                // Temporarily disable submit button to block double clicks / duplicate submissions
+                submitBtns.forEach(btn => {
+                    if (!btn.disabled) {
+                        btn.dataset.originalHTML = btn.innerHTML;
+                        btn.disabled = true;
+                        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Processing...';
+                    }
+                });
+
+                // Define mandatory input validation structures
+                const fields = [
+                    { id: 'req_name', label: 'Full Name' },
+                    { id: 'req_course', label: 'Course & Section' },
+                    { id: 'req_subject', label: 'Subject' },
+                    { id: 'req_station', label: 'Station Setup' },
+                    { id: 'req_batch', label: 'Batch No.' },
+                    { id: 'req_date', label: 'Date' },
+                    { id: 'req_time', label: 'Start Time' },
+                    { id: 'req_end_time', label: 'End Time' },
+                ];
+
+                // Ensure all required parameters contain non-empty values
+                for (const f of fields) {
+                    const el = document.getElementById(f.id);
+                    if (!el.value.trim()) {
+                        el.focus();
+                        el.style.borderColor = 'var(--red)';
+                        setTimeout(() => el.style.borderColor = '', 2000);
+                        showAlert(`Please fill in: ${f.label}`, 'error');
+                        enableBtns();
+                        return;
+                    }
                 }
-            })
-            .catch((err) => {
-                enableBtns();
-                console.error(err);
-                showAlert('Submission failed: ' + err.message, 'error');
-            });
-    }
+
+                // Ensure student has selected items to requisition
+                if (!Object.keys(labCart).length) {
+                    showAlert('Please add at least one item to your requisition.', 'error');
+                    enableBtns();
+                    return;
+                }
+
+                // Package requisition parameters into FormData structure
+                const formData = new FormData();
+                formData.append('name', document.getElementById('req_name').value.trim());
+                formData.append('email', document.getElementById('req_email').value.trim());
+                formData.append('contact', document.getElementById('req_contact').value.trim());
+                formData.append('course', document.getElementById('req_course').value.trim());
+                formData.append('subject', document.getElementById('req_subject').value.trim());
+                formData.append('station', document.getElementById('req_station').value.trim());
+                formData.append('batch', document.getElementById('req_batch').value.trim());
+                formData.append('date', document.getElementById('req_date').value);
+                formData.append('time', document.getElementById('req_time').value);
+                formData.append('end_time', document.getElementById('req_end_time').value);
+
+                // Convert checkout cart structure to serialized JSON payload
+                const cartObj = {};
+                Object.entries(labCart).forEach(([id, v]) => {
+                    cartObj[id] = { quantity: v.qty };
+                });
+                formData.append('cart', JSON.stringify(cartObj));
+
+                // Submit payload to backend endpoint
+                fetch('ajax/reservation_submit.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(async r => {
+                        const text = await r.text();
+                        try {
+                            return JSON.parse(text);
+                        } catch (e) {
+                            console.error('Server response was not JSON:', text);
+                            throw new Error('Invalid JSON response from server');
+                        }
+                    })
+                    .then(res => {
+                        enableBtns();
+                        if (res.status === 'success') {
+                            // Display success notice using SweetAlert2 popup library (if loaded)
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Requisition Submitted!',
+                                    text: 'Your request has been sent to the lab custodian for review. You can track its status in the My Requisitions page.',
+                                    confirmButtonColor: '#C0392B'
+                                });
+                            } else {
+                                showAlert('Requisition submitted! You will be notified once approved.', 'success');
+                            }
+
+                            labCart = {};
+                            sessionStorage.removeItem('reserve_form_data');
+                            sessionStorage.removeItem('reserve_cart');
+                            renderCart();
+                            document.querySelectorAll('.btn-add.added').forEach(b => {
+                                b.classList.remove('added');
+                                b.innerHTML = '<i class="bi bi-cart-plus"></i> Add to Cart';
+                            });
+                            ['req_name', 'req_email', 'req_contact', 'req_course',
+                                'req_subject', 'req_station', 'req_batch', 'req_date'].forEach(id => {
+                                    document.getElementById(id).value = '';
+                                });
+                            document.getElementById('req_time').selectedIndex = 0;
+                        } else {
+                            showAlert(res.status === 'error' ? res.message : 'Something went wrong. Please try again.', 'error');
+                        }
+                    })
+                    .catch((err) => {
+                        enableBtns();
+                        console.error(err);
+                        showAlert('Submission failed: ' + err.message, 'error');
+                    });
+            }
     function saveFormData() {
-        const data = {
-            name: document.getElementById('req_name').value,
-            email: document.getElementById('req_email').value,
-            contact: document.getElementById('req_contact').value,
-            course: document.getElementById('req_course').value,
-            subject: document.getElementById('req_subject').value,
-            station: document.getElementById('req_station').value,
-            batch: document.getElementById('req_batch').value,
-            date: document.getElementById('req_date').value,
-            time: document.getElementById('req_time').value,
-            end_time: document.getElementById('req_end_time').value
-        };
-        sessionStorage.setItem('reserve_form_data', JSON.stringify(data));
-        sessionStorage.setItem('reserve_cart', JSON.stringify(labCart));
-    }
+                const data = {
+                    name: document.getElementById('req_name').value,
+                    email: document.getElementById('req_email').value,
+                    contact: document.getElementById('req_contact').value,
+                    course: document.getElementById('req_course').value,
+                    subject: document.getElementById('req_subject').value,
+                    station: document.getElementById('req_station').value,
+                    batch: document.getElementById('req_batch').value,
+                    date: document.getElementById('req_date').value,
+                    time: document.getElementById('req_time').value,
+                    end_time: document.getElementById('req_end_time').value
+                };
+                sessionStorage.setItem('reserve_form_data', JSON.stringify(data));
+                sessionStorage.setItem('reserve_cart', JSON.stringify(labCart));
+            }
 
     function loadFormData() {
-        const rawData = sessionStorage.getItem('reserve_form_data');
-        if (rawData) {
-            const data = JSON.parse(rawData);
-            document.getElementById('req_name').value = data.name || '';
-            document.getElementById('req_email').value = data.email || '';
-            document.getElementById('req_contact').value = data.contact || '';
-            document.getElementById('req_course').value = data.course || '';
-            document.getElementById('req_subject').value = data.subject || '';
-            document.getElementById('req_station').value = data.station || '';
-            document.getElementById('req_batch').value = data.batch || '';
-            document.getElementById('req_date').value = data.date || '';
-            document.getElementById('req_time').value = data.time || '';
-        }
-        const rawCart = sessionStorage.getItem('reserve_cart');
-        if (rawCart) {
-            labCart = JSON.parse(rawCart);
-            renderCart();
-        }
-    }
+                const rawData = sessionStorage.getItem('reserve_form_data');
+                if (rawData) {
+                    const data = JSON.parse(rawData);
+                    document.getElementById('req_name').value = data.name || '';
+                    document.getElementById('req_email').value = data.email || '';
+                    document.getElementById('req_contact').value = data.contact || '';
+                    document.getElementById('req_course').value = data.course || '';
+                    document.getElementById('req_subject').value = data.subject || '';
+                    document.getElementById('req_station').value = data.station || '';
+                    document.getElementById('req_batch').value = data.batch || '';
+                    document.getElementById('req_date').value = data.date || '';
+                    document.getElementById('req_time').value = data.time || '';
+                }
+                const rawCart = sessionStorage.getItem('reserve_cart');
+                if (rawCart) {
+                    labCart = JSON.parse(rawCart);
+                    renderCart();
+                }
+            }
 
     function capitalizeInput(el) {
-        if (!el.value) return;
-        el.value = el.value.toLowerCase().split(' ').map(w => w.charAt(0).toUpperCase() + w.substr(1)).join(' ');
-    }
+                if (!el.value) return;
+                el.value = el.value.toLowerCase().split(' ').map(w => w.charAt(0).toUpperCase() + w.substr(1)).join(' ');
+            }
 </script>
 
 <?php require('inc/footer.php'); ?>

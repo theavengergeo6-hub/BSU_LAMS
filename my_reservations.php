@@ -1,22 +1,39 @@
 <?php
+/**
+ * BSU Kitchen Laboratory Requisition System - Student Booking History Interface
+ * 
+ * Path: my_reservations.php
+ * 
+ * Description:
+ * Allows students to check the status of their submitted requisitions.
+ * Key Features:
+ * - Search filter logic matching booking reference codes or registration emails.
+ * - Multi-status filtering (Pending, Approved, Ongoing, Completed, Denied).
+ * - Responsive layout rendering: outputs standard tables for desktop monitors
+ *   and structured grid card blocks for touch/mobile devices.
+ * - Interactive modal display triggering detail query requests to `get_reservation_details.php` backend.
+ */
+
 require('inc/header.php');
 
+// Safely gather and escape parameters from query parameters
 $search_email = isset($_GET['search']) ? mysqli_real_escape_string($con, $_GET['search']) : '';
 $status_filter = isset($_GET['status']) ? mysqli_real_escape_string($con, $_GET['status']) : '';
 
+// Construct modular SQL where filters based on active selection inputs
 $where_clause = "";
 if($search_email) {
     $where_clause .= " AND (user_email = '$search_email' OR reservation_no = '$search_email')";
 }
 if($status_filter) {
-    if($where_clause) $where_clause .= " AND status = '$status_filter'";
-    else $where_clause .= " AND status = '$status_filter'";
+    $where_clause .= " AND status = '$status_filter'";
 }
 ?>
 
 <div class="container mt-5 mb-5 p-lg-5 p-4 bg-white rounded shadow-sm custom-card">
     <h3 class="fw-bold mb-4 text-danger border-bottom pb-2">My Requisitions</h3>
     
+    <!-- Filter Search Form -->
     <form class="row g-3 mb-5 fade-in-up" method="GET">
         <div class="col-md-5">
             <input type="text" name="search" class="form-control bg-light" placeholder="Enter Registration Email or Requisition No." value="<?= htmlspecialchars($search_email) ?>" required>
@@ -38,11 +55,12 @@ if($status_filter) {
 
     <?php if($search_email): ?>
         <?php
+        // Execute dynamic query based on combined search inputs
         $q = "SELECT * FROM lab_reservations WHERE 1=1 $where_clause ORDER BY id DESC";
         $res = mysqli_query($con, $q);
         if(mysqli_num_rows($res) > 0) { ?>
             
-            <!-- Desktop Table View -->
+            <!-- ── DESKTOP TABLE LAYOUT (Hidden on mobile browsers) ── -->
             <div class="table-responsive fade-in-up d-none d-md-block">
                 <table class="table table-hover table-striped align-middle border">
                     <thead class="bg-light text-dark">
@@ -56,8 +74,9 @@ if($status_filter) {
                     </thead>
                     <tbody>
                         <?php
-                        mysqli_data_seek($res, 0);
+                        mysqli_data_seek($res, 0); // Reset result pointer to top
                         while($row = mysqli_fetch_assoc($res)) {
+                            // Assign matching color tokens to badges based on reservation status
                             $status_bg = "bg-warning text-dark";
                             if(strtolower($row['status']) == 'approved') $status_bg = "bg-info text-white";
                             if(strtolower($row['status']) == 'ongoing') $status_bg = "bg-primary";
@@ -83,7 +102,7 @@ if($status_filter) {
                 </table>
             </div>
 
-            <!-- Mobile Cards View -->
+            <!-- ── MOBILE CARD LAYOUT (Rendered on mobile viewports only) ── -->
             <div class="d-md-none fade-in-up">
                 <?php
                 mysqli_data_seek($res, 0);
@@ -117,12 +136,14 @@ if($status_filter) {
             </div>
 
         <?php } else { ?>
+            <!-- Fallback panel for no results matches -->
             <div class="alert border shadow-sm text-center py-5 fade-in-up" style="background:#fafafa; border-radius: 12px;">
                 <i class="bi bi-inbox fs-1 d-block mb-3" style="color: #cbd5e1;"></i>
                 <p class="text-muted mb-0 fw-medium">No requisitions found for current filter.</p>
             </div>
         <?php } ?>
     <?php elseif(empty($_GET['search'])): ?>
+        <!-- Default initial helper panel advising user to submit search criteria -->
         <div class="alert alert-info border-0 shadow-sm text-center py-4 fade-in-up">
             <i class="bi bi-info-circle fs-4 d-block mb-2"></i>
             Please enter your email or requisition number to view your requisitions.
@@ -130,7 +151,7 @@ if($status_filter) {
     <?php endif; ?>
 </div>
 
-<!-- Modal -->
+<!-- Requisition Detail Bootstrap Modal Overlay Pane -->
 <div class="modal fade" id="detailsModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content border-0">
@@ -146,12 +167,18 @@ if($status_filter) {
 </div>
 
 <script>
+/**
+ * Loads dynamic requisition details inside the Bootstrap modal pane.
+ * Connects asynchronously to backend detail rendering AJAX script.
+ * 
+ * @param {number} id The unique database primary key ID of the target reservation record.
+ */
 function viewDetails(id) {
-    let modal = new bootstrap.Modal(document.getElementById('detailsModal'));
+    let modalEl = document.getElementById('detailsModal');
+    let modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
     modal.show();
     
-    // We can fetch from an ajax script later if needed, but for simplicity, 
-    // we'll make a quick ajax fetch here since the requirements didn't specify an ajax file
+    // Fetch item details dynamically from ajax handler
     fetch(`ajax/get_reservation_details.php?id=${id}`)
     .then(res => res.text())
     .then(html => {

@@ -585,7 +585,8 @@ function viewReservation(id, resNo, isPending) {
     document.getElementById('modalTitleText').textContent = isPending ? 'Approve Requisition' : 'Requisition Details';
     document.getElementById('modalIcon').className = isPending ? 'bi bi-card-checklist' : 'bi bi-card-text';
 
-    let modal = new bootstrap.Modal(document.getElementById('approvalModal'));
+    let modalEl = document.getElementById('approvalModal');
+    let modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
     modal.show();
     document.getElementById('approvalModalBody').innerHTML = '<div class="dash-spinner"><div class="spin-ring"></div> Loading…</div>';
 
@@ -643,27 +644,7 @@ function filterByDate(date) {
     window.location.href = url.toString();
 }
 
-// --- Real-time updates ---
-let refreshInterval;
-function loadRequisitionsData() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const tab = urlParams.get('tab') || 'Pending';
-    const date = urlParams.get('date') || '';
-    
-    fetch(`ajax/load_requisitions_list.php?tab=${tab}&date=${date}`)
-        .then(res => res.text())
-        .then(html => {
-            document.getElementById('requisitions_data_container').innerHTML = html;
-            filterRows(); // Re-apply search filter
-        })
-        .catch(err => console.error('Error refreshing requisitions:', err));
-}
 
-// Start polling every 10 seconds
-refreshInterval = setInterval(loadRequisitionsData, 10000);
-
-// Clear interval on page unload
-window.addEventListener('beforeunload', () => clearInterval(refreshInterval));
 
 </script>
 

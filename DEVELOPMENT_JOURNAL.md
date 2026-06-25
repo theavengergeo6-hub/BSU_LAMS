@@ -18,15 +18,17 @@
 | 14 | May 12, Tue | Created the admin dashboard view for managing pending laboratory requests. |
 | 15 | May 13, Wed | Implemented the "Review" modal for admins to inspect student requisition carts. |
 | 16 | May 14, Thu | Added real-time status updates so students can track their approved requests. |
-| 17 | May 18, Mon | Coded the stock restoration logic for denied or completed requisitions. |
-| 18 | May 19, Tue | Implemented the 3-hour cooldown window for equipment after a lab session ends. |
-| 19 | May 20, Wed | Developed the PDF report generator for official laboratory requisition forms. |
-| 20 | May 21, Thu | Fixed database column errors in the inventory and transaction log system. |
-| 21 | May 25, Mon | Refined the breakage report layout to match the official department template. |
-| 22 | May 26, Tue | Added fixed coordinates to the PDF generator for precise form alignment. |
-| 23 | May 27, Wed | Implemented the monthly breakage aggregation feature for asset management. |
-| 24 | May 28, Thu | Renamed "Reservations" to "Requisitions" across all files and UI components. |
-| 25 | Jun 01, Mon | Added AJAX polling to the admin dashboard for real-time requisition updates. |
-| 26 | Jun 02, Tue | Polished the CSS using modern typography and a premium red color palette. |
-| 27 | Jun 03, Wed | Conducted final end-to-end testing of the student requisition and admin approval flow. |
-| 28 | Jun 04, Thu | Updated the user manual with step-by-step instructions for lab custodians. |
+| 17 | May 15, Fri | (WFH) Refactored cart JS logic, optimized admin DB queries, and wrote inline code documentation. |
+| 18 | May 18, Mon | Coded the stock restoration logic for denied or completed requisitions. |
+| 19 | May 19, Tue | Implemented the 3-hour cooldown window for equipment after a lab session ends. |
+| 20 | May 20, Wed | Developed the PDF report generator for official laboratory requisition forms. |
+| 21 | May 21, Thu | Fixed database column errors in the inventory and transaction log system. |
+| 22 | May 22, Fri | (WFH) Hardened form security, formatted code to PSR-12 standards, and prepared deployment package. |
+| 23 | May 25, Mon | Refined the breakage report layout to match the official department template. |
+| 24 | May 26, Tue | Added fixed coordinates to the PDF generator for precise form alignment. |
+| 25 | May 27, Wed | Implemented the monthly breakage aggregation feature for asset management. |
+| 26 | May 28, Thu | Renamed "Reservations" to "Requisitions" across all files and UI components. |
+| 27 | Jun 01, Mon | Added AJAX polling to the admin dashboard for real-time requisition updates. |
+| 28 | Jun 02, Tue | Polished the CSS using modern typography and a premium red color palette. |
+| 29 | Jun 03, Wed | Conducted final end-to-end testing of the student requisition and admin approval flow. |
+| 30 | Jun 04, Thu | Updated the user manual with step-by-step instructions for lab custodians. |
